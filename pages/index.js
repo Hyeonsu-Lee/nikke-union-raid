@@ -1532,7 +1532,16 @@ export default function Home() {
                     border-radius: 5px;
                     animation: slideDown 0.3s ease-out;
                 }
-                
+                @keyframes slideUp {
+                    from {
+                        bottom: -100px;
+                        opacity: 0;
+                    }
+                    to {
+                        bottom: 20px;
+                        opacity: 1;
+                    }
+                }
                 @keyframes slideDown {
                     from {
                         opacity: 0;
@@ -1558,21 +1567,26 @@ export default function Home() {
                     grid-template-columns: 1fr 1fr;
                     gap: 15px;
                 }
-                
+
+                .error-message, .success-message {
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    padding: 15px 30px;
+                    border-radius: 8px;
+                    z-index: 1000;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    animation: slideUp 0.3s ease-out;
+                }
                 .error-message {
                     background: #fff2f2;
                     color: #d32f2f;
-                    padding: 15px;
-                    border-radius: 8px;
-                    margin: 10px 0;
                 }
-                
+
                 .success-message {
                     background: #e8f5e9;
                     color: #2e7d32;
-                    padding: 15px;
-                    border-radius: 8px;
-                    margin: 10px 0;
                 }
                 
                 .loading {
