@@ -1,7 +1,7 @@
 // pages/index.js - 전체 코드 (너무 길어서 2개로 나눔)
 // 이 파일을 pages/index.js에 복사하세요
 
-import React, { useState, useEffect, useMemo } from 'react'; // ← React 추가!
+import React, { useState, useEffect, useMemo, Fragment } from 'react'; // ← React 추가!
 import { supabase } from '../lib/supabase';
 
 // 속성 정의
@@ -234,7 +234,7 @@ export default function Home() {
                         </thead>
                         <tbody>
                             {stats?.memberStats.map(member => (
-                                <React.Fragment key={member.name}>
+                                <Fragment key={member.name}>
                                     <tr 
                                         className={`member-row ${member.battles.length > 0 ? 'expandable' : ''}`}
                                         onClick={() => member.battles.length > 0 && toggleMemberDetails(member.name)}
@@ -270,7 +270,7 @@ export default function Home() {
                                             </td>
                                         </tr>
                                     )}
-                                </React.Fragment>
+                                </Fragment>
                             ))}
                         </tbody>
                     </table>
