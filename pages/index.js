@@ -15,13 +15,15 @@ export default function Home() {
     const [members, setMembers] = useState([]);
     const [mockBattles, setMockBattles] = useState([]);
     const [raidBattles, setRaidBattles] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [messages, setMessages] = useState([]);
     const [lastSync, setLastSync] = useState(null);
     
     // 초기 데이터 로드
     useEffect(() => {
-        loadData(); // 초기 로드 추가!
+        loadData().finally(() => {
+            setLoading(false);
+        });
         
     }, []);
     const formatNumberInput = (e) => {
