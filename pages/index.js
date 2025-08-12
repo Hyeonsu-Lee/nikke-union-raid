@@ -1,7 +1,7 @@
 // pages/index.js - 전체 코드 (너무 길어서 2개로 나눔)
 // 이 파일을 pages/index.js에 복사하세요
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react'; // ← React 추가!
 import { supabase } from '../lib/supabase';
 
 // 속성 정의
