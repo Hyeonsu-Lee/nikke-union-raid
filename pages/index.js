@@ -484,8 +484,8 @@ export default function Home() {
             const deck = deckRef.current.value;
             const damage = damageRef.current.value.replace(/,/g, '');
 
-            if (!memberNameRef.current.value || !bossIdRef.current.value || 
-                !deckRef.current.value || !damageRef.current.value.replace(/,/g, '')) {
+            // 2. validation (변수로!)
+            if (!memberName || !bossId || !deck || !damage) {
                 showMessage('모든 필드를 입력해주세요.', 'error');
                 return;
             }
@@ -731,8 +731,8 @@ export default function Home() {
             const deck = deckRef.current.value;
             const damage = damageRef.current.value.replace(/,/g, '');
 
-            if (!memberNameRef.current.value || !bossIdRef.current.value || 
-                !deckRef.current.value || !damageRef.current.value.replace(/,/g, '')) {
+            // 2. validation (변수로!)
+            if (!memberName || !bossId || !deck || !damage) {
                 showMessage('모든 필드를 입력해주세요.', 'error');
                 return;
             }
