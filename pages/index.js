@@ -37,42 +37,117 @@ export default function Home() {
         return () => supabase.removeChannel(channel);
     }, []);
     
-    const loadData = async (forceFullLoad = false) => {
+    const loadData = async () => {
         try {
-            const url = forceFullLoad || !lastSync 
-                ? '/api/data' 
-                : `/api/data?lastSync=${lastSync}`;
-                
+            const url = lastSync ? `/api/data?lastSync=${lastSync}` : '/api/data';
             const res = await fetch(url);
             const data = await res.json();
             
             if (data.changes) {
-                // 변경분만 적용
+                // 변경분 적용
+                if (data.changes.seasons?.updated?.length > 0) {
+                    setSeasons(prev => {
+                        const updated = [...prev];
+                        data.changes.seasons.updated.forEach(newItem => {
+                            const index = updated.findIndex(item => item.id === newItem.id);
+                            if (index >= 0) {
+                                updated[index] = newItem;
+                            } else {
+                                updated.push(newItem);
+                            }
+                        });
+                        return updated;
+                    });
+                }
+                
                 if (data.changes.members) {
                     setMembers(prev => {
                         let updated = [...prev];
-                        // 추가
-                        if (data.changes.members.added) {
-                            updated = [...updated, ...data.changes.members.added];
-                        }
+                        // 업데이트/추가
+                        data.changes.members.updated?.forEach(newItem => {
+                            const index = updated.findIndex(item => item.id === newItem.id);
+                            if (index >= 0) {
+                                updated[index] = newItem;
+                            } else {
+                                updated.push(newItem);
+                            }
+                        });
                         // 삭제
-                        if (data.changes.members.deleted) {
-                            const deleteIds = data.changes.members.deleted.map(d => d.id);
-                            updated = updated.filter(m => !deleteIds.includes(m.id));
+                        if (data.changes.members.deleted?.length > 0) {
+                            updated = updated.filter(m => !data.changes.members.deleted.includes(m.id));
                         }
                         return updated;
                     });
                 }
-                // raidBattles 등도 동일하게 처리
+                
+                // bosses, mockBattles, raidBattles도 동일하게 처리
+                if (data.changes.bosses?.updated?.length > 0) {
+                    setBosses(prev => {
+                        const updated = [...prev];
+                        data.changes.bosses.updated.forEach(newItem => {
+                            const index = updated.findIndex(item => item.id === newItem.id);
+                            if (index >= 0) {
+                                updated[index] = newItem;
+                            } else {
+                                updated.push(newItem);
+                            }
+                        });
+                        return updated;
+                    });
+                }
+                
+                if (data.changes.mockBattles) {
+                    setMockBattles(prev => {
+                        let updated = [...prev];
+                        data.changes.mockBattles.updated?.forEach(newItem => {
+                            const index = updated.findIndex(item => item.id === newItem.id);
+                            if (index >= 0) {
+                                updated[index] = newItem;
+                            } else {
+                                updated.push(newItem);
+                            }
+                        });
+                        if (data.changes.mockBattles.deleted?.length > 0) {
+                            updated = updated.filter(m => !data.changes.mockBattles.deleted.includes(m.id));
+                        }
+                        return updated;
+                    });
+                }
+                
+                if (data.changes.raidBattles) {
+                    setRaidBattles(prev => {
+                        let updated = [...prev];
+                        data.changes.raidBattles.updated?.forEach(newItem => {
+                            const index = updated.findIndex(item => item.id === newItem.id);
+                            if (index >= 0) {
+                                updated[index] = newItem;
+                            } else {
+                                updated.push(newItem);
+                            }
+                        });
+                        if (data.changes.raidBattles.deleted?.length > 0) {
+                            updated = updated.filter(m => !data.changes.raidBattles.deleted.includes(m.id));
+                        }
+                        return updated;
+                    });
+                }
             } else {
-                // 전체 데이터 (첫 로드)
+                // 첫 로드 - 전체 데이터
                 setSeasons(data.seasons || []);
                 setBosses(data.bosses || []);
                 setMembers(data.members || []);
-                // ...
+                setMockBattles(data.mockBattles || []);
+                setRaidBattles(data.raidBattles || []);
             }
             
-            setLastSync(data.timestamp || new Date().toISOString());
+            // 활성 시즌 업데이트
+            const activeSeason = data.seasons?.find(s => s.is_active) || 
+                              seasons.find(s => s.is_active);
+            if (activeSeason) {
+                setCurrentSeason(activeSeason);
+            }
+            
+            setLastSync(data.timestamp);
         } catch (error) {
             console.error('데이터 로드 실패:', error);
         }
