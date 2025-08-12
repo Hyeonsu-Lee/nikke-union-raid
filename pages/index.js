@@ -24,7 +24,12 @@ export default function Home() {
         loadData(); // 초기 로드 추가!
         
     }, []);
-    
+    const formatNumberInput = (e) => {
+        const value = e.target.value.replace(/,/g, '');
+        if (value !== '') {
+            e.target.value = parseInt(value).toLocaleString();
+        }
+    };
     const loadData = async () => {
         try {
             const url = lastSync ? `/api/data?lastSync=${lastSync}` : '/api/data';
@@ -470,24 +475,6 @@ export default function Home() {
         const [searchBoss, setSearchBoss] = useState('');
         const [searchDamage, setSearchDamage] = useState('');
         
-        const formatNumber = (value) => {
-            const number = value.replace(/,/g, '');
-            if (!number) return '';
-            if (isNaN(number)) return value; // NaN 체크 추가
-            return parseInt(number).toLocaleString();
-        };
-        
-        const handleDamageInput = (e) => {
-            const cursorPos = e.target.selectionStart;
-            const oldLength = e.target.value.length;
-            
-            e.target.value = formatNumber(e.target.value);
-            
-            const newLength = e.target.value.length;
-            const diff = newLength - oldLength;
-            e.target.setSelectionRange(cursorPos + diff, cursorPos + diff);
-        };
-
         const handleSubmit = async (e) => {
             e.preventDefault();
             
@@ -584,7 +571,7 @@ export default function Home() {
                                 ref={damageRef}
                                 type="number"
                                 className="form-control"
-                                onInput={handleDamageInput}
+                                onBlur={formatNumberInput} 
                                 placeholder="대미지 입력"
                             />
                         </div>
@@ -712,24 +699,6 @@ export default function Home() {
         const [memberSuggestions, setMemberSuggestions] = useState([]);
         const [showSuggestions, setShowSuggestions] = useState(false);
         
-        const formatNumber = (value) => {
-            const number = value.replace(/,/g, '');
-            if (!number) return '';
-            if (isNaN(number)) return value; // NaN 체크 추가
-            return parseInt(number).toLocaleString();
-        };
-        
-        const handleDamageInput = (e) => {
-            const cursorPos = e.target.selectionStart;
-            const oldLength = e.target.value.length;
-            
-            e.target.value = formatNumber(e.target.value);
-            
-            const newLength = e.target.value.length;
-            const diff = newLength - oldLength;
-            e.target.setSelectionRange(cursorPos + diff, cursorPos + diff);
-        };
-
         const seasonMembers = useMemo(() => {
             return members.filter(m => m.season_id === currentSeason?.id);
         }, [members, currentSeason]);
@@ -896,7 +865,7 @@ export default function Home() {
                                 ref={damageRef}
                                 type="number"
                                 className="form-control"
-                                onInput={handleDamageInput}
+                                onBlur={formatNumberInput}
                                 placeholder="대미지 입력"
                             />
                         </div>
@@ -1153,7 +1122,7 @@ export default function Home() {
                             
                             if (boss.level <= 3) {
                                 const hpInput = formRef.current[`boss-hp-${boss.level}-${idx}`];
-                                if (hpInput) hpInput.value = boss.hp.toLocaleString();
+                                if (hpInput) hpInput.value = boss.hp.toString();
                             }
                         }
                     });
@@ -1245,7 +1214,7 @@ export default function Home() {
                                                 name={`boss-hp-${level}-${idx}`}
                                                 type="text"
                                                 className="form-control"
-                                                onInput={handleHPInput}
+                                                onBlur={formatNumberInput}
                                                 placeholder="HP 입력"
                                             />
                                         </div>
