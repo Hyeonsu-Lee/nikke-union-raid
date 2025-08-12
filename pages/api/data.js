@@ -2,33 +2,85 @@
 import { supabase } from '../../lib/supabase'
 
 export default async function handler(req, res) {
-    const { lastSync } = req.query;
-    
-    if (!lastSync) {
-        // 첫 로드 - 전체 데이터
-        const [/* 기존 코드 */] = await Promise.all([...]);
-        return res.status(200).json({ /* 전체 데이터 */ });
+    if (req.method !== 'GET') {
+        return res.status(405).json({ error: 'Method not allowed' });
     }
     
-    // 변경분만 조회
-    const [
-        { data: newMembers },
-        { data: deletedMembers },
-        { data: newRaidBattles },
-        // ...
-    ] = await Promise.all([
-        supabase.from('members').select('*').gt('created_at', lastSync),
-        supabase.from('members').select('id').gt('deleted_at', lastSync).eq('is_deleted', true),
-        supabase.from('raid_battles').select('*').gt('created_at', lastSync),
-        // ...
-    ]);
+    const { lastSync } = req.query;
     
-    res.status(200).json({
-        changes: {
-            members: { added: newMembers, deleted: deletedMembers },
-            raidBattles: { added: newRaidBattles },
-            // ...
-        },
-        timestamp: new Date().toISOString()
-    });
+    try {
+        if (!lastSync) {
+            // 첫 로드 - 전체 데이터
+            const [
+                { data: seasons, error: seasonsError },
+                { data: bosses, error: bossesError },
+                { data: members, error: membersError },
+                { data: mockBattles, error: mockError },
+                { data: raidBattles, error: raidError }
+            ] = await Promise.all([
+                supabase.from('seasons').select('*').order('created_at', { ascending: false }),
+                supabase.from('bosses').select('*'),
+                supabase.from('members').select('*').is('deleted_at', null),
+                supabase.from('mock_battles').select('*').is('deleted_at', null),
+                supabase.from('raid_battles').select('*').is('deleted_at', null).order('timestamp', { ascending: false })
+            ]);
+            
+            if (seasonsError || bossesError || membersError || mockError || raidError) {
+                throw new Error('Database query failed');
+            }
+            
+            return res.status(200).json({
+                seasons: seasons || [],
+                bosses: bosses || [],
+                members: members || [],
+                mockBattles: mockBattles || [],
+                raidBattles: raidBattles || [],
+                timestamp: new Date().toISOString()
+            });
+        } else {
+            // 변경분만 조회
+            const [
+                { data: updatedSeasons },
+                { data: updatedBosses },
+                { data: updatedMembers },
+                { data: updatedMockBattles },
+                { data: updatedRaidBattles },
+                { data: deletedMembers },
+                { data: deletedMockBattles },
+                { data: deletedRaidBattles }
+            ] = await Promise.all([
+                supabase.from('seasons').select('*').gt('updated_at', lastSync),
+                supabase.from('bosses').select('*').gt('updated_at', lastSync),
+                supabase.from('members').select('*').gt('updated_at', lastSync).is('deleted_at', null),
+                supabase.from('mock_battles').select('*').gt('updated_at', lastSync).is('deleted_at', null),
+                supabase.from('raid_battles').select('*').gt('updated_at', lastSync).is('deleted_at', null),
+                supabase.from('members').select('id').not('deleted_at', 'is', null).gt('deleted_at', lastSync),
+                supabase.from('mock_battles').select('id').not('deleted_at', 'is', null).gt('deleted_at', lastSync),
+                supabase.from('raid_battles').select('id').not('deleted_at', 'is', null).gt('deleted_at', lastSync)
+            ]);
+            
+            return res.status(200).json({
+                changes: {
+                    seasons: { updated: updatedSeasons || [] },
+                    bosses: { updated: updatedBosses || [] },
+                    members: { 
+                        updated: updatedMembers || [], 
+                        deleted: deletedMembers ? deletedMembers.map(d => d.id) : []
+                    },
+                    mockBattles: { 
+                        updated: updatedMockBattles || [], 
+                        deleted: deletedMockBattles ? deletedMockBattles.map(d => d.id) : []
+                    },
+                    raidBattles: { 
+                        updated: updatedRaidBattles || [], 
+                        deleted: deletedRaidBattles ? deletedRaidBattles.map(d => d.id) : []
+                    }
+                },
+                timestamp: new Date().toISOString()
+            });
+        }
+    } catch (error) {
+        console.error('Database error:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
 }
