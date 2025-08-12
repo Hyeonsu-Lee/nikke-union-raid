@@ -1,5 +1,5 @@
 // pages/api/seasons.js
-import { sql } from '@vercel/postgres';
+import { supabase } from '../../lib/supabase'
 
 export default async function handler(req, res) {
     const { method } = req;
@@ -10,29 +10,32 @@ export default async function handler(req, res) {
             
             try {
                 // 새 시즌 생성
-                const result = await sql`
-                    INSERT INTO seasons (name, date, is_active)
-                    VALUES (${name}, ${date}, false)
-                    RETURNING id
-                `;
+                const { data: newSeason, error: seasonError } = await supabase
+                    .from('seasons')
+                    .insert([{ name, date, is_active: false }])
+                    .select()
+                    .single();
                 
-                const newSeasonId = result.rows[0].id;
+                if (seasonError) throw seasonError;
                 
                 // 이전 시즌에서 멤버 복사
                 if (copyFromSeason) {
-                    const members = await sql`
-                        SELECT name FROM members WHERE season_id = ${copyFromSeason}
-                    `;
+                    const { data: sourceMembers } = await supabase
+                        .from('members')
+                        .select('name')
+                        .eq('season_id', copyFromSeason);
                     
-                    for (const member of members.rows) {
-                        await sql`
-                            INSERT INTO members (season_id, name)
-                            VALUES (${newSeasonId}, ${member.name})
-                        `;
+                    if (sourceMembers && sourceMembers.length > 0) {
+                        const newMembers = sourceMembers.map(member => ({
+                            season_id: newSeason.id,
+                            name: member.name
+                        }));
+                        
+                        await supabase.from('members').insert(newMembers);
                     }
                 }
                 
-                res.status(200).json({ success: true, id: newSeasonId });
+                res.status(200).json({ success: true, id: newSeason.id });
             } catch (error) {
                 res.status(500).json({ error: error.message });
             }
@@ -44,14 +47,19 @@ export default async function handler(req, res) {
             try {
                 if (isActive) {
                     // 모든 시즌 비활성화
-                    await sql`UPDATE seasons SET is_active = false`;
+                    await supabase
+                        .from('seasons')
+                        .update({ is_active: false })
+                        .neq('id', 0); // 모든 행 업데이트
                 }
                 
                 // 선택한 시즌 활성화
-                await sql`
-                    UPDATE seasons SET is_active = ${isActive}
-                    WHERE id = ${id}
-                `;
+                const { error } = await supabase
+                    .from('seasons')
+                    .update({ is_active: isActive })
+                    .eq('id', id);
+                
+                if (error) throw error;
                 
                 res.status(200).json({ success: true });
             } catch (error) {
@@ -61,7 +69,13 @@ export default async function handler(req, res) {
             
         case 'DELETE':
             try {
-                await sql`DELETE FROM seasons WHERE id = ${req.query.id}`;
+                const { error } = await supabase
+                    .from('seasons')
+                    .delete()
+                    .eq('id', req.query.id);
+                
+                if (error) throw error;
+                
                 res.status(200).json({ success: true });
             } catch (error) {
                 res.status(500).json({ error: error.message });

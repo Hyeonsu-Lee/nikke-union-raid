@@ -1,5 +1,5 @@
 // pages/api/bosses.js
-import { sql } from '@vercel/postgres';
+import { supabase } from '../../lib/supabase'
 
 export default async function handler(req, res) {
     const { method } = req;
@@ -10,22 +10,29 @@ export default async function handler(req, res) {
             
             try {
                 // 기존 보스 삭제
-                await sql`DELETE FROM bosses WHERE season_id = ${seasonId}`;
+                await supabase
+                    .from('bosses')
+                    .delete()
+                    .eq('season_id', seasonId);
                 
                 // 새 보스 데이터 삽입
-                for (const boss of bossData) {
-                    await sql`
-                        INSERT INTO bosses (season_id, name, attribute, level, hp, mechanic)
-                        VALUES (${seasonId}, ${boss.name}, ${boss.attribute}, 
-                                ${boss.level}, ${boss.hp}, ${boss.mechanic})
-                    `;
-                }
+                const bossesWithSeasonId = bossData.map(boss => ({
+                    ...boss,
+                    season_id: seasonId
+                }));
                 
-                const updated = await sql`
-                    SELECT * FROM bosses WHERE season_id = ${seasonId}
-                `;
+                const { error } = await supabase
+                    .from('bosses')
+                    .insert(bossesWithSeasonId);
                 
-                res.status(200).json(updated.rows);
+                if (error) throw error;
+                
+                const { data: updated } = await supabase
+                    .from('bosses')
+                    .select('*')
+                    .eq('season_id', seasonId);
+                
+                res.status(200).json(updated || []);
             } catch (error) {
                 res.status(500).json({ error: error.message });
             }
@@ -35,11 +42,12 @@ export default async function handler(req, res) {
             const { id, hp, mechanic } = req.body;
             
             try {
-                await sql`
-                    UPDATE bosses 
-                    SET hp = ${hp}, mechanic = ${mechanic}
-                    WHERE id = ${id}
-                `;
+                const { error } = await supabase
+                    .from('bosses')
+                    .update({ hp, mechanic })
+                    .eq('id', id);
+                
+                if (error) throw error;
                 
                 res.status(200).json({ success: true });
             } catch (error) {

@@ -1,5 +1,5 @@
 // pages/api/raid-battles.js
-import { sql } from '@vercel/postgres';
+import { supabase } from '../../lib/supabase'
 
 export default async function handler(req, res) {
     const { method } = req;
@@ -9,10 +9,18 @@ export default async function handler(req, res) {
             const { seasonId, memberName, level, bossId, deckComposition, damage } = req.body;
             
             try {
-                await sql`
-                    INSERT INTO raid_battles (season_id, member_name, level, boss_id, deck_composition, damage)
-                    VALUES (${seasonId}, ${memberName}, ${level}, ${bossId}, ${deckComposition}, ${damage})
-                `;
+                const { error } = await supabase
+                    .from('raid_battles')
+                    .insert([{
+                        season_id: seasonId,
+                        member_name: memberName,
+                        level,
+                        boss_id: bossId,
+                        deck_composition: deckComposition,
+                        damage
+                    }]);
+                
+                if (error) throw error;
                 
                 res.status(200).json({ success: true });
             } catch (error) {
@@ -22,7 +30,13 @@ export default async function handler(req, res) {
             
         case 'DELETE':
             try {
-                await sql`DELETE FROM raid_battles WHERE id = ${req.query.id}`;
+                const { error } = await supabase
+                    .from('raid_battles')
+                    .delete()
+                    .eq('id', req.query.id);
+                
+                if (error) throw error;
+                
                 res.status(200).json({ success: true });
             } catch (error) {
                 res.status(500).json({ error: error.message });

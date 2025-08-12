@@ -1,5 +1,5 @@
 // pages/api/data.js
-import { sql } from '@vercel/postgres';
+import { supabase } from '../../lib/supabase'
 
 export default async function handler(req, res) {
     if (req.method !== 'GET') {
@@ -7,20 +7,30 @@ export default async function handler(req, res) {
     }
     
     try {
-        const [seasons, bosses, members, mockBattles, raidBattles] = await Promise.all([
-            sql`SELECT * FROM seasons ORDER BY created_at DESC`,
-            sql`SELECT * FROM bosses`,
-            sql`SELECT * FROM members`,
-            sql`SELECT * FROM mock_battles`,
-            sql`SELECT * FROM raid_battles ORDER BY timestamp DESC`
+        const [
+            { data: seasons, error: seasonsError },
+            { data: bosses, error: bossesError },
+            { data: members, error: membersError },
+            { data: mockBattles, error: mockError },
+            { data: raidBattles, error: raidError }
+        ] = await Promise.all([
+            supabase.from('seasons').select('*').order('created_at', { ascending: false }),
+            supabase.from('bosses').select('*'),
+            supabase.from('members').select('*'),
+            supabase.from('mock_battles').select('*'),
+            supabase.from('raid_battles').select('*').order('timestamp', { ascending: false })
         ]);
         
+        if (seasonsError || bossesError || membersError || mockError || raidError) {
+            throw new Error('Database query failed');
+        }
+        
         res.status(200).json({
-            seasons: seasons.rows,
-            bosses: bosses.rows,
-            members: members.rows,
-            mockBattles: mockBattles.rows,
-            raidBattles: raidBattles.rows
+            seasons: seasons || [],
+            bosses: bosses || [],
+            members: members || [],
+            mockBattles: mockBattles || [],
+            raidBattles: raidBattles || []
         });
     } catch (error) {
         console.error('Database error:', error);

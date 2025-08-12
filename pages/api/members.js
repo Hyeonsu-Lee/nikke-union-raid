@@ -1,5 +1,5 @@
 // pages/api/members.js
-import { sql } from '@vercel/postgres';
+import { supabase } from '../../lib/supabase'
 
 export default async function handler(req, res) {
     const { method } = req;
@@ -9,16 +9,18 @@ export default async function handler(req, res) {
             const { seasonId, name } = req.body;
             
             try {
-                await sql`
-                    INSERT INTO members (season_id, name)
-                    VALUES (${seasonId}, ${name})
-                `;
+                const { error } = await supabase
+                    .from('members')
+                    .insert([{ season_id: seasonId, name }]);
                 
-                const updated = await sql`
-                    SELECT * FROM members WHERE season_id = ${seasonId}
-                `;
+                if (error) throw error;
                 
-                res.status(200).json(updated.rows);
+                const { data: updated } = await supabase
+                    .from('members')
+                    .select('*')
+                    .eq('season_id', seasonId);
+                
+                res.status(200).json(updated || []);
             } catch (error) {
                 res.status(500).json({ error: error.message });
             }
@@ -26,7 +28,13 @@ export default async function handler(req, res) {
             
         case 'DELETE':
             try {
-                await sql`DELETE FROM members WHERE id = ${req.query.id}`;
+                const { error } = await supabase
+                    .from('members')
+                    .delete()
+                    .eq('id', req.query.id);
+                
+                if (error) throw error;
+                
                 res.status(200).json({ success: true });
             } catch (error) {
                 res.status(500).json({ error: error.message });
