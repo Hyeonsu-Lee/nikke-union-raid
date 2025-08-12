@@ -22,19 +22,7 @@ export default function Home() {
     // 초기 데이터 로드
     useEffect(() => {
         loadData(); // 초기 로드 추가!
-        const channel = supabase
-            .channel('changes')
-            .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
-                // 변경된 데이터만 처리
-                if (payload.eventType === 'INSERT') {
-                    // 추가만
-                } else if (payload.eventType === 'DELETE') {
-                    // 삭제만
-                }
-            })
-            .subscribe();
-            
-        return () => supabase.removeChannel(channel);
+        
     }, []);
     
     const loadData = async () => {
