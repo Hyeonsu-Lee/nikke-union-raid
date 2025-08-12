@@ -479,6 +479,12 @@ export default function Home() {
                 return;
             }
             
+            // 초기화
+            memberNameRef.current.value = '';
+            bossIdRef.current.value = '';
+            deckRef.current.value = '';
+            damageRef.current.value = '';
+
             await saveData('mock-battles', {
                 seasonId: currentSeason.id,
                 memberName: memberNameRef.current.value,
@@ -487,11 +493,6 @@ export default function Home() {
                 damage: parseInt(damageRef.current.value)
             });
             
-            // 초기화
-            memberNameRef.current.value = '';
-            bossIdRef.current.value = '';
-            deckRef.current.value = '';
-            damageRef.current.value = '';
         };
         
         const seasonBosses = bosses.filter(b => b.season_id === currentSeason?.id && b.level === 1);
@@ -727,6 +728,13 @@ export default function Home() {
                 return;
             }
             
+            // 초기화
+            memberNameRef.current.value = '';
+            // level은 유지
+            bossIdRef.current.value = '';
+            deckRef.current.value = '';
+            damageRef.current.value = '';
+
             await saveData('raid-battles', {
                 seasonId: currentSeason.id,
                 memberName: memberNameRef.current.value,
@@ -736,12 +744,6 @@ export default function Home() {
                 damage: parseInt(damageRef.current.value)
             });
             
-            // 초기화
-            memberNameRef.current.value = '';
-            // level은 유지
-            bossIdRef.current.value = '';
-            deckRef.current.value = '';
-            damageRef.current.value = '';
             setShowSuggestions(false);
         };
         
@@ -955,16 +957,16 @@ export default function Home() {
         const handleSubmit = async (e) => {
             e.preventDefault();
             
+            // 초기화
+            nameRef.current.value = '';
+            dateRef.current.value = '';
+            copyRef.current.value = '';
+
             await saveData('seasons', {
                 name: nameRef.current.value,
                 date: dateRef.current.value,
                 copyFromSeason: copyRef.current.value
             });
-            
-            // 초기화
-            nameRef.current.value = '';
-            dateRef.current.value = '';
-            copyRef.current.value = '';
         };
         
         const activateSeason = async (seasonId) => {
@@ -1291,6 +1293,7 @@ export default function Home() {
             }
             // 입력 필드 초기화
             memberNameRef.current.value = '';
+            
             await saveData('members', {
                 seasonId: currentSeason.id,
                 name: memberName
