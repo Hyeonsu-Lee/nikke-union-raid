@@ -1082,57 +1082,57 @@ export default function Home() {
     // 보스 설정 - 폼 전체를 ref로 관리!
     // 보스 설정 컴포넌트 - null 에러 해결 버전
     // 보스 설정 컴포넌트 - 다른 탭에서도 에러 안나도록 수정
+    // 보스 설정 컴포넌트 - useEffect 완전 제거 버전
     const BossSettings = () => {
         const formRef = useRef();
+        const [formInitialized, setFormInitialized] = useState(false);
         
+        // 탭 진입 시 한 번만 데이터 로드
         useEffect(() => {
-            // 보스 탭이 아니면 실행하지 않음
-            if (activeSettingTab !== 'boss') return;
-            
-            // DOM이 준비되지 않았거나 currentSeason이 없으면 종료
+            if (activeSettingTab === 'boss' && !formInitialized) {
+                loadBossDataToForm();
+                setFormInitialized(true);
+            } else if (activeSettingTab !== 'boss') {
+                setFormInitialized(false);
+            }
+        }, [activeSettingTab]);
+        
+        // 보스 데이터를 폼에 로드하는 함수
+        const loadBossDataToForm = () => {
             if (!currentSeason || !formRef.current) return;
             
             const seasonBosses = bosses.filter(b => b.season_id === currentSeason.id);
             if (seasonBosses.length === 0) return;
             
-            // 다음 렌더링 사이클에서 실행
-            const timer = setTimeout(() => {
-                if (!formRef.current) return;
-                
-                const form = formRef.current;
-                const elements = form.elements;
-                
-                if (!elements) return;
-                
-                seasonBosses.forEach(boss => {
-                    const idx = ATTRIBUTES.indexOf(boss.attribute);
-                    if (idx === -1) return;
-                    
-                    try {
-                        const nameInput = elements[`boss-name-${idx}`];
-                        const mechanicInput = elements[`boss-mechanic-${idx}`];
-                        
-                        if (nameInput) {
-                            nameInput.value = boss.name;
-                        }
-                        if (mechanicInput) {
-                            mechanicInput.value = boss.mechanic || '';
-                        }
-                        
-                        if (boss.level <= 3) {
-                            const hpInput = elements[`boss-hp-${boss.level}-${idx}`];
-                            if (hpInput) {
-                                hpInput.value = boss.hp.toString();
-                            }
-                        }
-                    } catch (error) {
-                        // 에러 무시
-                    }
-                });
-            }, 0);
+            const form = formRef.current;
+            const elements = form.elements;
+            if (!elements) return;
             
-            return () => clearTimeout(timer);
-        }, [currentSeason?.id, bosses, activeSettingTab]); // activeSettingTab 의존성 추가
+            // 폼 초기화
+            form.reset();
+            
+            seasonBosses.forEach(boss => {
+                const idx = ATTRIBUTES.indexOf(boss.attribute);
+                if (idx === -1) return;
+                
+                const nameInput = elements[`boss-name-${idx}`];
+                const mechanicInput = elements[`boss-mechanic-${idx}`];
+                
+                if (nameInput) {
+                    nameInput.value = boss.name;
+                }
+                if (mechanicInput) {
+                    mechanicInput.value = boss.mechanic || '';
+                }
+                
+                if (boss.level <= 3) {
+                    const hpInput = elements[`boss-hp-${boss.level}-${idx}`];
+                    if (hpInput) {
+                        hpInput.value = boss.hp.toString();
+                    }
+                }
+            });
+        };
         
         const handleSubmit = async (e) => {
             e.preventDefault();
@@ -1179,6 +1179,12 @@ export default function Home() {
             });
         };
         
+        // 수동으로 데이터 다시 로드하는 버튼 (선택사항)
+        const handleReloadData = () => {
+            loadBossDataToForm();
+            showMessage('보스 데이터를 다시 불러왔습니다.', 'success');
+        };
+        
         return (
             <div>
                 {!currentSeason ? (
@@ -1186,67 +1192,82 @@ export default function Home() {
                         먼저 시즌을 활성화해주세요.
                     </div>
                 ) : (
-                    <form ref={formRef} onSubmit={handleSubmit}>
-                        <h3 style={{marginBottom: '15px'}}>보스 이름 설정</h3>
-                        <div className="boss-input-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px'}}>
-                            {ATTRIBUTES.map((attr, idx) => (
-                                <div key={attr} className="boss-input-card" style={{background: '#f8f9fa', padding: '15px', borderRadius: '8px'}}>
-                                    <h4 className={`attribute-${attr}`} style={{padding: '5px', borderRadius: '5px', textAlign: 'center', marginBottom: '10px'}}>
-                                        {attr}
-                                    </h4>
-                                    <input
-                                        name={`boss-name-${idx}`}
-                                        type="text"
-                                        className="form-control"
-                                        placeholder="보스 이름"
-                                    />
-                                </div>
-                            ))}
+                    <>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                            <h3 style={{margin: 0}}>보스 설정</h3>
+                            {bosses.filter(b => b.season_id === currentSeason.id).length > 0 && (
+                                <button 
+                                    type="button" 
+                                    className="btn btn-secondary"
+                                    onClick={handleReloadData}
+                                >
+                                    저장된 데이터 불러오기
+                                </button>
+                            )}
                         </div>
                         
-                        <h3 style={{marginTop: '30px', marginBottom: '15px'}}>레벨별 HP 설정</h3>
-                        {[1, 2, 3].map(level => (
-                            <div key={level} style={{marginBottom: '20px'}}>
-                                <h4 style={{marginBottom: '10px', color: '#666'}}>레벨 {level}</h4>
-                                <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px'}}>
-                                    {ATTRIBUTES.map((attr, idx) => (
-                                        <div key={attr}>
-                                            <label style={{fontSize: '12px', marginBottom: '5px', display: 'block'}}>
-                                                {attr} HP
-                                            </label>
-                                            <input
-                                                name={`boss-hp-${level}-${idx}`}
-                                                type="number"
-                                                className="form-control"
-                                                placeholder="HP 입력"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
+                        <form ref={formRef} onSubmit={handleSubmit}>
+                            <h3 style={{marginBottom: '15px'}}>보스 이름 설정</h3>
+                            <div className="boss-input-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px'}}>
+                                {ATTRIBUTES.map((attr, idx) => (
+                                    <div key={attr} className="boss-input-card" style={{background: '#f8f9fa', padding: '15px', borderRadius: '8px'}}>
+                                        <h4 className={`attribute-${attr}`} style={{padding: '5px', borderRadius: '5px', textAlign: 'center', marginBottom: '10px'}}>
+                                            {attr}
+                                        </h4>
+                                        <input
+                                            name={`boss-name-${idx}`}
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="보스 이름"
+                                        />
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                        
-                        <h3 style={{marginTop: '30px', marginBottom: '15px'}}>보스 기믹 (선택)</h3>
-                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px'}}>
-                            {ATTRIBUTES.map((attr, idx) => (
-                                <div key={attr}>
-                                    <label style={{fontSize: '12px', marginBottom: '5px', display: 'block'}}>
-                                        {attr} 기믹
-                                    </label>
-                                    <textarea
-                                        name={`boss-mechanic-${idx}`}
-                                        className="form-control"
-                                        rows="3"
-                                        placeholder="기믹 설명"
-                                    />
+                            
+                            <h3 style={{marginTop: '30px', marginBottom: '15px'}}>레벨별 HP 설정</h3>
+                            {[1, 2, 3].map(level => (
+                                <div key={level} style={{marginBottom: '20px'}}>
+                                    <h4 style={{marginBottom: '10px', color: '#666'}}>레벨 {level}</h4>
+                                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px'}}>
+                                        {ATTRIBUTES.map((attr, idx) => (
+                                            <div key={attr}>
+                                                <label style={{fontSize: '12px', marginBottom: '5px', display: 'block'}}>
+                                                    {attr} HP
+                                                </label>
+                                                <input
+                                                    name={`boss-hp-${level}-${idx}`}
+                                                    type="number"
+                                                    className="form-control"
+                                                    placeholder="HP 입력"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             ))}
-                        </div>
-                        
-                        <button type="submit" className="btn btn-primary" style={{marginTop: '20px'}}>
-                            보스 정보 일괄 저장
-                        </button>
-                    </form>
+                            
+                            <h3 style={{marginTop: '30px', marginBottom: '15px'}}>보스 기믹 (선택)</h3>
+                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px'}}>
+                                {ATTRIBUTES.map((attr, idx) => (
+                                    <div key={attr}>
+                                        <label style={{fontSize: '12px', marginBottom: '5px', display: 'block'}}>
+                                            {attr} 기믹
+                                        </label>
+                                        <textarea
+                                            name={`boss-mechanic-${idx}`}
+                                            className="form-control"
+                                            rows="3"
+                                            placeholder="기믹 설명"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <button type="submit" className="btn btn-primary" style={{marginTop: '20px'}}>
+                                보스 정보 일괄 저장
+                            </button>
+                        </form>
+                    </>
                 )}
                 
                 <h3 style={{marginTop: '30px', marginBottom: '15px'}}>현재 시즌 보스 목록</h3>
