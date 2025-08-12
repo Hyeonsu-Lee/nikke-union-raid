@@ -53,7 +53,7 @@ export default function Home() {
             
             if (res.ok) {
                 showMessage('데이터가 저장되었습니다.', 'success');
-                //await loadData();
+                await loadData();
             }
         } catch (error) {
             showMessage('저장 실패: ' + error.message, 'error');
@@ -68,7 +68,7 @@ export default function Home() {
             
             if (res.ok) {
                 showMessage('삭제되었습니다.', 'success');
-                //await loadData();
+                await loadData();
             }
         } catch (error) {
             showMessage('삭제 실패: ' + error.message, 'error');
@@ -203,7 +203,7 @@ export default function Home() {
                         </thead>
                         <tbody>
                             {stats?.memberStats.map(member => (
-                                <Fragment key={member.name}>
+                                <React.Fragment key={member.name}>
                                     <tr 
                                         className={`member-row ${member.battles.length > 0 ? 'expandable' : ''}`}
                                         onClick={() => member.battles.length > 0 && toggleMemberDetails(member.name)}
@@ -239,7 +239,7 @@ export default function Home() {
                                             </td>
                                         </tr>
                                     )}
-                                </Fragment>
+                                </React.Fragment>
                             ))}
                         </tbody>
                     </table>
