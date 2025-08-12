@@ -18,6 +18,7 @@ export default function Home() {
     const [loading, setLoading] = useState(true);
     const [messages, setMessages] = useState([]);
     const [lastSync, setLastSync] = useState(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     
     // 초기 데이터 로드
     useEffect(() => {
@@ -26,6 +27,20 @@ export default function Home() {
         });
         
     }, []);
+
+    // loadData 래퍼 함수
+    const handleRefresh = async () => {
+        if (isRefreshing) return;  // 이미 갱신 중이면 무시
+        
+        setIsRefreshing(true);
+        await loadData();
+        
+        // 3초 후에 다시 활성화
+        setTimeout(() => {
+            setIsRefreshing(false);
+        }, 3000);
+    };
+
     const formatNumberInput = (e) => {
         // 숫자가 아닌 문자 모두 제거
         const value = e.target.value.replace(/[^0-9]/g, '');
@@ -1869,9 +1884,14 @@ export default function Home() {
                     <h1>니케 유니온 레이드 관제 시스템</h1>
                     <button 
                         className="btn btn-secondary"
-                        onClick={() => loadData()}
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        style={{
+                            opacity: isRefreshing ? 0.5 : 1,
+                            cursor: isRefreshing ? 'not-allowed' : 'pointer'
+                        }}
                     >
-                        🔄 갱신
+                        {isRefreshing ? '⏳ 갱신중...' : '🔄 갱신'}
                     </button>
                 </div>
                 <div className="nav-tabs">
