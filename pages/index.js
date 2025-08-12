@@ -637,10 +637,7 @@ export default function Home() {
                                 className="form-control"
                             >
                                 <option value="">보스 선택</option>
-                                {bosses.filter(b => 
-                                    b.season_id === currentSeason?.id && 
-                                    b.level === (levelRef.current ? parseInt(levelRef.current.value) : 1)
-                                ).map(boss => (
+                                {seasonBosses.map(boss => (
                                     <option key={boss.id} value={boss.id}>
                                         {boss.name} ({boss.attribute})
                                     </option>
