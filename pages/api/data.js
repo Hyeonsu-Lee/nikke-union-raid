@@ -2,38 +2,33 @@
 import { supabase } from '../../lib/supabase'
 
 export default async function handler(req, res) {
-    if (req.method !== 'GET') {
-        return res.status(405).json({ error: 'Method not allowed' });
+    const { lastSync } = req.query;
+    
+    if (!lastSync) {
+        // 첫 로드 - 전체 데이터
+        const [/* 기존 코드 */] = await Promise.all([...]);
+        return res.status(200).json({ /* 전체 데이터 */ });
     }
     
-    try {
-        const [
-            { data: seasons, error: seasonsError },
-            { data: bosses, error: bossesError },
-            { data: members, error: membersError },
-            { data: mockBattles, error: mockError },
-            { data: raidBattles, error: raidError }
-        ] = await Promise.all([
-            supabase.from('seasons').select('*').order('created_at', { ascending: false }),
-            supabase.from('bosses').select('*'),
-            supabase.from('members').select('*'),
-            supabase.from('mock_battles').select('*'),
-            supabase.from('raid_battles').select('*').order('timestamp', { ascending: false })
-        ]);
-        
-        if (seasonsError || bossesError || membersError || mockError || raidError) {
-            throw new Error('Database query failed');
-        }
-        
-        res.status(200).json({
-            seasons: seasons || [],
-            bosses: bosses || [],
-            members: members || [],
-            mockBattles: mockBattles || [],
-            raidBattles: raidBattles || []
-        });
-    } catch (error) {
-        console.error('Database error:', error);
-        res.status(500).json({ error: 'Database error' });
-    }
+    // 변경분만 조회
+    const [
+        { data: newMembers },
+        { data: deletedMembers },
+        { data: newRaidBattles },
+        // ...
+    ] = await Promise.all([
+        supabase.from('members').select('*').gt('created_at', lastSync),
+        supabase.from('members').select('id').gt('deleted_at', lastSync).eq('is_deleted', true),
+        supabase.from('raid_battles').select('*').gt('created_at', lastSync),
+        // ...
+    ]);
+    
+    res.status(200).json({
+        changes: {
+            members: { added: newMembers, deleted: deletedMembers },
+            raidBattles: { added: newRaidBattles },
+            // ...
+        },
+        timestamp: new Date().toISOString()
+    });
 }

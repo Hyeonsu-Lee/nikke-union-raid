@@ -17,27 +17,62 @@ export default function Home() {
     const [raidBattles, setRaidBattles] = useState([]);
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
+    const [lastSync, setLastSync] = useState(null);
     
     // 초기 데이터 로드
     useEffect(() => {
         loadData(); // 초기 로드 추가!
+        const channel = supabase
+            .channel('changes')
+            .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+                // 변경된 데이터만 처리
+                if (payload.eventType === 'INSERT') {
+                    // 추가만
+                } else if (payload.eventType === 'DELETE') {
+                    // 삭제만
+                }
+            })
+            .subscribe();
+            
+        return () => supabase.removeChannel(channel);
     }, []);
     
-    const loadData = async () => {
+    const loadData = async (forceFullLoad = false) => {
         try {
-            const res = await fetch('/api/data');
+            const url = forceFullLoad || !lastSync 
+                ? '/api/data' 
+                : `/api/data?lastSync=${lastSync}`;
+                
+            const res = await fetch(url);
             const data = await res.json();
             
-            setSeasons(data.seasons || []);
-            setBosses(data.bosses || []);
-            setMembers(data.members || []);
-            setMockBattles(data.mockBattles || []);
-            setRaidBattles(data.raidBattles || []);
-            
-            const activeSeason = data.seasons?.find(s => s.is_active);
-            if (activeSeason) {
-                setCurrentSeason(activeSeason);
+            if (data.changes) {
+                // 변경분만 적용
+                if (data.changes.members) {
+                    setMembers(prev => {
+                        let updated = [...prev];
+                        // 추가
+                        if (data.changes.members.added) {
+                            updated = [...updated, ...data.changes.members.added];
+                        }
+                        // 삭제
+                        if (data.changes.members.deleted) {
+                            const deleteIds = data.changes.members.deleted.map(d => d.id);
+                            updated = updated.filter(m => !deleteIds.includes(m.id));
+                        }
+                        return updated;
+                    });
+                }
+                // raidBattles 등도 동일하게 처리
+            } else {
+                // 전체 데이터 (첫 로드)
+                setSeasons(data.seasons || []);
+                setBosses(data.bosses || []);
+                setMembers(data.members || []);
+                // ...
             }
+            
+            setLastSync(data.timestamp || new Date().toISOString());
         } catch (error) {
             console.error('데이터 로드 실패:', error);
         }
