@@ -490,6 +490,11 @@ export default function Home() {
                 return;
             }
 
+            if (!damage || isNaN(damage) || parseInt(damage) <= 0) {
+                showMessage('대미지는 양의 숫자여야 합니다.', 'error');
+                return;
+            }
+
             // 2. validation (변수로!)
             if (!memberName || !bossId || !deck || !damage) {
                 showMessage('모든 필드를 입력해주세요.', 'error');
@@ -739,6 +744,11 @@ export default function Home() {
 
             if (!seasonMembers.some(m => m.name === memberName)) {
                 showMessage('등록되지 않은 멤버입니다.', 'error');
+                return;
+            }
+
+            if (!damage || isNaN(damage) || parseInt(damage) <= 0) {
+                showMessage('대미지는 양의 숫자여야 합니다.', 'error');
                 return;
             }
 
@@ -1167,6 +1177,16 @@ export default function Home() {
                     const hp = hpValue ? hpValue.replace(/,/g, '') : '';
 
                     if (hp && hp !== '0') {
+                        // 숫자 검증 추가
+                        if (isNaN(hp)) {
+                            showMessage(`${attr} 레벨 ${level} HP는 숫자여야 합니다.`, 'error');
+                            return;
+                        }
+                        
+                        if (parseInt(hp) <= 0) {
+                            showMessage(`${attr} 레벨 ${level} HP는 0보다 커야 합니다.`, 'error');
+                            return;
+                        }
                         newBosses.push({
                             name,
                             attribute: attr,
