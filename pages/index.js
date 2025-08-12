@@ -16,7 +16,7 @@ export default function Home() {
     const [mockBattles, setMockBattles] = useState([]);
     const [raidBattles, setRaidBattles] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState([]);
+    const [messages, setMessages] = useState([]);
     
     // 초기 데이터 로드
     useEffect(() => {
@@ -81,9 +81,7 @@ export default function Home() {
     
     const showMessage = (text, type = 'info') => {
         const id = Date.now();
-        const newMessage = { id, text, type };
-        
-        setMessages(prev => [...prev, newMessage]);
+        setMessages(prev => [...prev, { id, text, type }]);
         
         setTimeout(() => {
             setMessages(prev => prev.filter(msg => msg.id !== id));
@@ -1678,17 +1676,10 @@ export default function Home() {
                 </div>
             </div>
             
-            {messages.map((msg, index) => (
+            {messages && messages.length > 0 && messages.map((msg, index) => (
                 <div 
                     key={msg.id}
                     className={msg.type === 'error' ? 'error-message' : 'success-message'}
-                    style={{
-                        position: 'fixed',
-                        bottom: `${20 + (index * 60)}px`,  // index 사용
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        zIndex: 1000 + index  // index 사용
-                    }}
                 >
                     {msg.text}
                 </div>
