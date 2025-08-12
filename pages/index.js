@@ -402,7 +402,7 @@ export default function Home() {
                     const bossBattles = raidBattles.filter(b => 
                         b.boss_id === boss.id && 
                         b.season_id === currentSeason.id &&
-                        (currentLevel === 999 || b.level === currentLevel)  // 현재 레벨만
+                        b.level === level
                     );
                     const totalDamage = bossBattles.reduce((sum, b) => sum + (parseInt(b.damage) || 0), 0);
                     return totalDamage >= boss.hp;
@@ -637,7 +637,10 @@ export default function Home() {
                                 className="form-control"
                             >
                                 <option value="">보스 선택</option>
-                                {seasonBosses.map(boss => (
+                                {bosses.filter(b => 
+                                    b.season_id === currentSeason?.id && 
+                                    b.level === (levelRef.current ? parseInt(levelRef.current.value) : 1)
+                                ).map(boss => (
                                     <option key={boss.id} value={boss.id}>
                                         {boss.name} ({boss.attribute})
                                     </option>
