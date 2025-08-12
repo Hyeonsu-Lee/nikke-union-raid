@@ -1000,7 +1000,7 @@ export default function Home() {
                     setLevelHPs(hps);
                 }
             }
-        }, []);
+        }, [currentSeason, bosses]);
         
         const handleSubmit = async (e) => {
             e.preventDefault();
