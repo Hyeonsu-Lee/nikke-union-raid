@@ -1678,16 +1678,16 @@ export default function Home() {
                 </div>
             </div>
             
-            {messages.map(msg => (
+            {messages.map((msg, index) => (
                 <div 
                     key={msg.id}
                     className={msg.type === 'error' ? 'error-message' : 'success-message'}
                     style={{
                         position: 'fixed',
-                        bottom: `${20 + (messages.indexOf(msg) * 60)}px`,  // 메시지 겹치지 않게
+                        bottom: `${20 + (index * 60)}px`,  // index 사용
                         left: '50%',
                         transform: 'translateX(-50%)',
-                        zIndex: 1000 + messages.indexOf(msg)
+                        zIndex: 1000 + index  // index 사용
                     }}
                 >
                     {msg.text}
