@@ -44,6 +44,15 @@ export default function Home() {
                                 updated.push(newItem);
                             }
                         });
+                        
+                        // setState 콜백 내에서 활성 시즌 찾기
+                        const activeSeason = updated.find(s => s.is_active);
+                        if (activeSeason) {
+                            setCurrentSeason(activeSeason);
+                        } else {
+                            setCurrentSeason(null);
+                        }
+                        
                         return updated;
                     });
                 }
@@ -68,7 +77,6 @@ export default function Home() {
                     });
                 }
                 
-                // bosses, mockBattles, raidBattles도 동일하게 처리
                 if (data.changes.bosses?.updated?.length > 0) {
                     setBosses(prev => {
                         const updated = [...prev];
@@ -126,13 +134,14 @@ export default function Home() {
                 setMembers(data.members || []);
                 setMockBattles(data.mockBattles || []);
                 setRaidBattles(data.raidBattles || []);
-            }
-            
-            // 활성 시즌 업데이트
-            const activeSeason = data.seasons?.find(s => s.is_active) || 
-                              seasons.find(s => s.is_active);
-            if (activeSeason) {
-                setCurrentSeason(activeSeason);
+                
+                // 첫 로드 시 활성 시즌 설정
+                const activeSeason = (data.seasons || []).find(s => s.is_active);
+                if (activeSeason) {
+                    setCurrentSeason(activeSeason);
+                } else {
+                    setCurrentSeason(null);
+                }
             }
             
             setLastSync(data.timestamp);
