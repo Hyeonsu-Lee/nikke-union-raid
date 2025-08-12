@@ -20,8 +20,12 @@ export default function Home() {
     
     // 초기 데이터 로드
     useEffect(() => {
-      loadData();
-    }, []);
+    const interval = setInterval(() => {
+        loadData();
+    }, 5 * 60 * 1000);  // 5분
+    
+    return () => clearInterval(interval);
+}, []);
     
     const loadData = async () => {
         try {
