@@ -17,13 +17,17 @@ export default async function handler(req, res) {
                         level,
                         boss_id: bossId,
                         deck_composition: deckComposition,
-                        damage
+                        damage,
+                        timestamp: new Date().toISOString(),  // raid_battles 전용 필드
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
                     }]);
                 
                 if (error) throw error;
                 
                 res.status(200).json({ success: true });
             } catch (error) {
+                console.error('Raid battle insert error:', error);
                 res.status(500).json({ error: error.message });
             }
             break;
@@ -43,6 +47,7 @@ export default async function handler(req, res) {
                 
                 res.status(200).json({ success: true });
             } catch (error) {
+                console.error('Raid battle delete error:', error);
                 res.status(500).json({ error: error.message });
             }
             break;
