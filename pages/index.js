@@ -401,8 +401,7 @@ export default function Home() {
                 const allBossesDefeated = levelBosses.every(boss => {
                     const bossBattles = raidBattles.filter(b => 
                         b.boss_id === boss.id && 
-                        b.season_id === currentSeason.id &&
-                        b.level === level
+                        b.season_id === currentSeason.id
                     );
                     const totalDamage = bossBattles.reduce((sum, b) => sum + (parseInt(b.damage) || 0), 0);
                     return totalDamage >= boss.hp;
