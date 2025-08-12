@@ -21,11 +21,6 @@ export default function Home() {
     // 초기 데이터 로드
     useEffect(() => {
         loadData(); // 초기 로드 추가!
-        const interval = setInterval(() => {
-            loadData();
-        }, 5 * 60 * 1000);  // 5분
-        
-        return () => clearInterval(interval);
     }, []);
     
     const loadData = async () => {
@@ -90,7 +85,7 @@ export default function Home() {
         
         setTimeout(() => {
             setMessages(prev => prev.filter(msg => msg.id !== id));
-        }, 3000);
+        }, 1000);
     };
     
     // 대시보드 컴포넌트
