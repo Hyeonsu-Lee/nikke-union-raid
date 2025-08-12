@@ -1,7 +1,7 @@
-// pages/index.js - 전체 코드 (너무 길어서 2개로 나눔)
-// 이 파일을 pages/index.js에 복사하세요
+// pages/index.js - Uncontrolled Components로 변경된 버전
+// Part 1: imports부터 MockBattle까지
 
-import React, { useState, useEffect, useMemo, Fragment } from 'react'; // ← React 추가!
+import React, { useState, useEffect, useMemo, useRef } from 'react'; // useRef 추가!
 
 // 속성 정의
 const ATTRIBUTES = ['풍압', '철갑', '수냉', '작열', '전격'];
@@ -20,12 +20,13 @@ export default function Home() {
     
     // 초기 데이터 로드
     useEffect(() => {
-    const interval = setInterval(() => {
-        loadData();
-    }, 5 * 60 * 1000);  // 5분
-    
-    return () => clearInterval(interval);
-}, []);
+        loadData(); // 초기 로드 추가!
+        const interval = setInterval(() => {
+            loadData();
+        }, 5 * 60 * 1000);  // 5분
+        
+        return () => clearInterval(interval);
+    }, []);
     
     const loadData = async () => {
         try {
@@ -56,8 +57,10 @@ export default function Home() {
             });
             
             if (res.ok) {
-                showMessage('데이터가 저장되었습니다.', 'success');
-                await loadData();
+                await Promise.all([
+                    loadData(),
+                    showMessage('데이터가 저장되었습니다.', 'success')
+                ]);
             }
         } catch (error) {
             showMessage('저장 실패: ' + error.message, 'error');
@@ -71,8 +74,10 @@ export default function Home() {
             });
             
             if (res.ok) {
-                showMessage('삭제되었습니다.', 'success');
-                await loadData();
+              await Promise.all([
+                loadData(),
+                showMessage('삭제되었습니다.', 'success')
+              ]);
             }
         } catch (error) {
             showMessage('삭제 실패: ' + error.message, 'error');
@@ -351,39 +356,40 @@ export default function Home() {
         );
     };
 
-    // 모의전 입력 컴포넌트
+    // 모의전 입력 컴포넌트 - Uncontrolled로 변경!
     const MockBattle = () => {
-        const [formData, setFormData] = useState({
-            memberName: '',
-            bossId: '',
-            deckComposition: '',
-            damage: ''
-        });
+        // useRef로 변경
+        const memberNameRef = useRef();
+        const bossIdRef = useRef();
+        const deckRef = useRef();
+        const damageRef = useRef();
+        
+        // 검색은 state 유지
         const [searchBoss, setSearchBoss] = useState('');
         const [searchDamage, setSearchDamage] = useState('');
         
         const handleSubmit = async (e) => {
             e.preventDefault();
             
-            if (!formData.memberName || !formData.bossId || !formData.deckComposition || !formData.damage) {
+            if (!memberNameRef.current.value || !bossIdRef.current.value || 
+                !deckRef.current.value || !damageRef.current.value) {
                 showMessage('모든 필드를 입력해주세요.', 'error');
                 return;
             }
             
             await saveData('mock-battles', {
                 seasonId: currentSeason.id,
-                memberName: formData.memberName,
-                bossId: formData.bossId,
-                deckComposition: formData.deckComposition,
-                damage: parseInt(formData.damage)
+                memberName: memberNameRef.current.value,
+                bossId: bossIdRef.current.value,
+                deckComposition: deckRef.current.value,
+                damage: parseInt(damageRef.current.value)
             });
             
-            setFormData({
-                memberName: '',
-                bossId: '',
-                deckComposition: '',
-                damage: ''
-            });
+            // 초기화
+            memberNameRef.current.value = '';
+            bossIdRef.current.value = '';
+            deckRef.current.value = '';
+            damageRef.current.value = '';
         };
         
         const seasonBosses = bosses.filter(b => b.season_id === currentSeason?.id && b.level === 1);
@@ -413,10 +419,9 @@ export default function Home() {
                         <div className="form-group">
                             <label>멤버 이름</label>
                             <input
+                                ref={memberNameRef}
                                 type="text"
                                 className="form-control"
-                                value={formData.memberName}
-                                onChange={(e) => setFormData({...formData, memberName: e.target.value})}
                                 placeholder="닉네임 입력"
                             />
                         </div>
@@ -424,9 +429,8 @@ export default function Home() {
                         <div className="form-group">
                             <label>보스 선택 (레벨 1)</label>
                             <select
+                                ref={bossIdRef}
                                 className="form-control"
-                                value={formData.bossId}
-                                onChange={(e) => setFormData({...formData, bossId: e.target.value})}
                             >
                                 <option value="">보스 선택</option>
                                 {seasonBosses.map(boss => (
@@ -440,10 +444,9 @@ export default function Home() {
                         <div className="form-group">
                             <label>덱 조합</label>
                             <input
+                                ref={deckRef}
                                 type="text"
                                 className="form-control"
-                                value={formData.deckComposition}
-                                onChange={(e) => setFormData({...formData, deckComposition: e.target.value})}
                                 placeholder="예: 크라운, 세이렌, 라피, 레드후드, 나가"
                             />
                         </div>
@@ -451,10 +454,9 @@ export default function Home() {
                         <div className="form-group">
                             <label>대미지</label>
                             <input
+                                ref={damageRef}
                                 type="number"
                                 className="form-control"
-                                value={formData.damage}
-                                onChange={(e) => setFormData({...formData, damage: e.target.value})}
                                 placeholder="대미지 입력"
                             />
                         </div>
@@ -569,16 +571,16 @@ export default function Home() {
             </div>
         );
     };
-    
-    // 실전 입력 컴포넌트
+// 실전 입력 컴포넌트 - Uncontrolled로 변경!
     const RaidBattle = () => {
-        const [formData, setFormData] = useState({
-            memberName: '',
-            level: 1,
-            bossId: '',
-            deckComposition: '',
-            damage: ''
-        });
+        // useRef로 변경
+        const memberNameRef = useRef();
+        const levelRef = useRef();
+        const bossIdRef = useRef();
+        const deckRef = useRef();
+        const damageRef = useRef();
+        
+        // 자동완성은 state 유지
         const [memberSuggestions, setMemberSuggestions] = useState([]);
         const [showSuggestions, setShowSuggestions] = useState(false);
         
@@ -586,8 +588,8 @@ export default function Home() {
             return members.filter(m => m.season_id === currentSeason?.id);
         }, [members, currentSeason]);
         
-        const handleMemberInput = (value) => {
-            setFormData({...formData, memberName: value});
+        const handleMemberInput = () => {
+            const value = memberNameRef.current.value;
             
             if (value.length > 0) {
                 const filtered = seasonMembers.filter(m => 
@@ -601,20 +603,21 @@ export default function Home() {
         };
         
         const selectMember = (memberName) => {
-            setFormData({...formData, memberName});
+            memberNameRef.current.value = memberName;
             setShowSuggestions(false);
         };
         
         const handleSubmit = async (e) => {
             e.preventDefault();
             
-            if (!formData.memberName || !formData.bossId || !formData.deckComposition || !formData.damage) {
+            if (!memberNameRef.current.value || !bossIdRef.current.value || 
+                !deckRef.current.value || !damageRef.current.value) {
                 showMessage('모든 필드를 입력해주세요.', 'error');
                 return;
             }
             
             const memberBattles = raidBattles.filter(b => 
-                b.season_id === currentSeason.id && b.member_name === formData.memberName
+                b.season_id === currentSeason.id && b.member_name === memberNameRef.current.value
             );
             
             if (memberBattles.length >= 3) {
@@ -624,25 +627,26 @@ export default function Home() {
             
             await saveData('raid-battles', {
                 seasonId: currentSeason.id,
-                memberName: formData.memberName,
-                level: formData.level,
-                bossId: formData.bossId,
-                deckComposition: formData.deckComposition,
-                damage: parseInt(formData.damage)
+                memberName: memberNameRef.current.value,
+                level: parseInt(levelRef.current.value),
+                bossId: bossIdRef.current.value,
+                deckComposition: deckRef.current.value,
+                damage: parseInt(damageRef.current.value)
             });
             
-            setFormData({
-                memberName: '',
-                level: formData.level,
-                bossId: '',
-                deckComposition: '',
-                damage: ''
-            });
+            // 초기화
+            memberNameRef.current.value = '';
+            // level은 유지
+            bossIdRef.current.value = '';
+            deckRef.current.value = '';
+            damageRef.current.value = '';
             setShowSuggestions(false);
         };
         
+        // 레벨 변경 시 보스 목록 업데이트
         const levelBosses = bosses.filter(b => 
-            b.season_id === currentSeason?.id && b.level === formData.level
+            b.season_id === currentSeason?.id && 
+            b.level === (levelRef.current ? parseInt(levelRef.current.value) : 1)
         );
         const seasonRaidBattles = raidBattles.filter(b => b.season_id === currentSeason?.id);
         
@@ -655,11 +659,11 @@ export default function Home() {
                         <div className="form-group" style={{position: 'relative'}}>
                             <label>멤버 이름</label>
                             <input
+                                ref={memberNameRef}
                                 type="text"
                                 className="form-control"
-                                value={formData.memberName}
-                                onChange={(e) => handleMemberInput(e.target.value)}
-                                onFocus={() => formData.memberName && setShowSuggestions(true)}
+                                onInput={handleMemberInput}
+                                onFocus={() => memberNameRef.current.value && setShowSuggestions(true)}
                                 placeholder="닉네임 입력 또는 선택"
                             />
                             {showSuggestions && memberSuggestions.length > 0 && (
@@ -699,9 +703,15 @@ export default function Home() {
                         <div className="form-group">
                             <label>레벨</label>
                             <select
+                                ref={levelRef}
                                 className="form-control"
-                                value={formData.level}
-                                onChange={(e) => setFormData({...formData, level: parseInt(e.target.value), bossId: ''})}
+                                defaultValue={1}
+                                onChange={() => {
+                                    // 레벨 변경 시 보스 선택 초기화
+                                    if (bossIdRef.current) {
+                                        bossIdRef.current.value = '';
+                                    }
+                                }}
                             >
                                 <option value={1}>레벨 1</option>
                                 <option value={2}>레벨 2</option>
@@ -713,12 +723,14 @@ export default function Home() {
                         <div className="form-group">
                             <label>보스 선택</label>
                             <select
+                                ref={bossIdRef}
                                 className="form-control"
-                                value={formData.bossId}
-                                onChange={(e) => setFormData({...formData, bossId: e.target.value})}
                             >
                                 <option value="">보스 선택</option>
-                                {levelBosses.map(boss => (
+                                {bosses.filter(b => 
+                                    b.season_id === currentSeason?.id && 
+                                    b.level === (levelRef.current ? parseInt(levelRef.current.value) : 1)
+                                ).map(boss => (
                                     <option key={boss.id} value={boss.id}>
                                         {boss.name} ({boss.attribute})
                                     </option>
@@ -729,10 +741,9 @@ export default function Home() {
                         <div className="form-group">
                             <label>대미지</label>
                             <input
+                                ref={damageRef}
                                 type="number"
                                 className="form-control"
-                                value={formData.damage}
-                                onChange={(e) => setFormData({...formData, damage: e.target.value})}
                                 placeholder="대미지 입력"
                             />
                         </div>
@@ -741,10 +752,9 @@ export default function Home() {
                     <div className="form-group">
                         <label>덱 조합</label>
                         <input
+                            ref={deckRef}
                             type="text"
                             className="form-control"
-                            value={formData.deckComposition}
-                            onChange={(e) => setFormData({...formData, deckComposition: e.target.value})}
                             placeholder="예: 크라운, 세이렌, 라피, 레드후드, 나가"
                         />
                     </div>
@@ -832,31 +842,27 @@ export default function Home() {
             </div>
         );
     };
-    
-    // pages/index.js의 Settings 부분을 이 코드로 교체하세요
 
-    // 시즌 설정
+    // 시즌 설정 - Uncontrolled로 변경!
     const SeasonSettings = () => {
-        const [seasonForm, setSeasonForm] = useState({
-            name: '',
-            date: '',
-            copyFromSeason: ''
-        });
+        // useRef로 변경
+        const nameRef = useRef();
+        const dateRef = useRef();
+        const copyRef = useRef();
         
         const handleSubmit = async (e) => {
             e.preventDefault();
             
             await saveData('seasons', {
-                name: seasonForm.name,
-                date: seasonForm.date,
-                copyFromSeason: seasonForm.copyFromSeason
+                name: nameRef.current.value,
+                date: dateRef.current.value,
+                copyFromSeason: copyRef.current.value
             });
             
-            setSeasonForm({
-                name: '',
-                date: '',
-                copyFromSeason: ''
-            });
+            // 초기화
+            nameRef.current.value = '';
+            dateRef.current.value = '';
+            copyRef.current.value = '';
         };
         
         const activateSeason = async (seasonId) => {
@@ -873,10 +879,9 @@ export default function Home() {
                         <div className="form-group">
                             <label>시즌 이름</label>
                             <input
+                                ref={nameRef}
                                 type="text"
                                 className="form-control"
-                                value={seasonForm.name}
-                                onChange={(e) => setSeasonForm({...seasonForm, name: e.target.value})}
                                 placeholder="예: 2025년 1월 시즌"
                                 required
                             />
@@ -885,10 +890,9 @@ export default function Home() {
                         <div className="form-group">
                             <label>레이드 날짜</label>
                             <input
+                                ref={dateRef}
                                 type="date"
                                 className="form-control"
-                                value={seasonForm.date}
-                                onChange={(e) => setSeasonForm({...seasonForm, date: e.target.value})}
                                 required
                             />
                         </div>
@@ -897,9 +901,8 @@ export default function Home() {
                     <div className="form-group">
                         <label>이전 시즌 멤버 복사 (선택)</label>
                         <select
+                            ref={copyRef}
                             className="form-control"
-                            value={seasonForm.copyFromSeason}
-                            onChange={(e) => setSeasonForm({...seasonForm, copyFromSeason: e.target.value})}
                         >
                             <option value="">멤버 복사 안함</option>
                             {seasons.map(season => {
@@ -974,38 +977,29 @@ export default function Home() {
         );
     };
     
-    // 보스 설정
+    // 보스 설정 - 폼 전체를 ref로 관리!
     const BossSettings = () => {
-        const [bossNames, setBossNames] = useState(['', '', '', '', '']);
-        const [bossMechanics, setBossMechanics] = useState(['', '', '', '', '']);
-        const [levelHPs, setLevelHPs] = useState({
-            1: ['', '', '', '', ''],
-            2: ['', '', '', '', ''],
-            3: ['', '', '', '', '']
-        });
+        const formRef = useRef();
         
         useEffect(() => {
-            if (currentSeason) {
+            if (currentSeason && formRef.current) {
                 const seasonBosses = bosses.filter(b => b.season_id === currentSeason.id);
                 if (seasonBosses.length > 0) {
-                    const names = Array(5).fill('');
-                    const mechanics = Array(5).fill('');
-                    const hps = {1: Array(5).fill(''), 2: Array(5).fill(''), 3: Array(5).fill('')};
-                    
                     seasonBosses.forEach(boss => {
                         const idx = ATTRIBUTES.indexOf(boss.attribute);
                         if (idx !== -1) {
-                            names[idx] = boss.name;
-                            mechanics[idx] = boss.mechanic || '';
+                            const nameInput = formRef.current[`boss-name-${idx}`];
+                            const mechanicInput = formRef.current[`boss-mechanic-${idx}`];
+                            
+                            if (nameInput) nameInput.value = boss.name;
+                            if (mechanicInput) mechanicInput.value = boss.mechanic || '';
+                            
                             if (boss.level <= 3) {
-                                hps[boss.level][idx] = boss.hp.toString();
+                                const hpInput = formRef.current[`boss-hp-${boss.level}-${idx}`];
+                                if (hpInput) hpInput.value = boss.hp.toString();
                             }
                         }
                     });
-                    
-                    setBossNames(names);
-                    setBossMechanics(mechanics);
-                    setLevelHPs(hps);
                 }
             }
         }, [currentSeason, bosses]);
@@ -1018,29 +1012,34 @@ export default function Home() {
                 return;
             }
             
+            const formData = new FormData(formRef.current);
             const newBosses = [];
             
             ATTRIBUTES.forEach((attr, idx) => {
-                if (!bossNames[idx]) return;
+                const name = formData.get(`boss-name-${idx}`);
+                const mechanic = formData.get(`boss-mechanic-${idx}`);
+                
+                if (!name) return;
                 
                 [1, 2, 3].forEach(level => {
-                    if (levelHPs[level][idx]) {
+                    const hp = formData.get(`boss-hp-${level}-${idx}`);
+                    if (hp) {
                         newBosses.push({
-                            name: bossNames[idx],
+                            name,
                             attribute: attr,
                             level: level,
-                            hp: parseInt(levelHPs[level][idx]),
-                            mechanic: bossMechanics[idx]
+                            hp: parseInt(hp),
+                            mechanic
                         });
                     }
                 });
                 
                 newBosses.push({
-                    name: bossNames[idx],
+                    name,
                     attribute: attr,
                     level: 999,
                     hp: 0,
-                    mechanic: bossMechanics[idx]
+                    mechanic
                 });
             });
             
@@ -1057,7 +1056,7 @@ export default function Home() {
                         먼저 시즌을 활성화해주세요.
                     </div>
                 ) : (
-                    <form onSubmit={handleSubmit}>
+                    <form ref={formRef} onSubmit={handleSubmit}>
                         <h3 style={{marginBottom: '15px'}}>보스 이름 설정</h3>
                         <div className="boss-input-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px'}}>
                             {ATTRIBUTES.map((attr, idx) => (
@@ -1066,15 +1065,10 @@ export default function Home() {
                                         {attr}
                                     </h4>
                                     <input
+                                        name={`boss-name-${idx}`}
                                         type="text"
                                         className="form-control"
                                         placeholder="보스 이름"
-                                        value={bossNames[idx]}
-                                        onChange={(e) => {
-                                            const newNames = [...bossNames];
-                                            newNames[idx] = e.target.value;
-                                            setBossNames(newNames);
-                                        }}
                                     />
                                 </div>
                             ))}
@@ -1091,15 +1085,10 @@ export default function Home() {
                                                 {attr} HP
                                             </label>
                                             <input
+                                                name={`boss-hp-${level}-${idx}`}
                                                 type="number"
                                                 className="form-control"
                                                 placeholder="HP 입력"
-                                                value={levelHPs[level][idx]}
-                                                onChange={(e) => {
-                                                    const newHPs = {...levelHPs};
-                                                    newHPs[level][idx] = e.target.value;
-                                                    setLevelHPs(newHPs);
-                                                }}
                                             />
                                         </div>
                                     ))}
@@ -1115,15 +1104,10 @@ export default function Home() {
                                         {attr} 기믹
                                     </label>
                                     <textarea
+                                        name={`boss-mechanic-${idx}`}
                                         className="form-control"
                                         rows="3"
                                         placeholder="기믹 설명"
-                                        value={bossMechanics[idx]}
-                                        onChange={(e) => {
-                                            const newMechanics = [...bossMechanics];
-                                            newMechanics[idx] = e.target.value;
-                                            setBossMechanics(newMechanics);
-                                        }}
                                     />
                                 </div>
                             ))}
@@ -1174,9 +1158,10 @@ export default function Home() {
         );
     };
     
-    // 멤버 설정
+    // 멤버 설정 - Uncontrolled로 변경!
     const MemberSettings = () => {
-        const [memberName, setMemberName] = useState('');
+        // useRef로 변경
+        const memberNameRef = useRef();
         
         const handleSubmit = async (e) => {
             e.preventDefault();
@@ -1186,7 +1171,9 @@ export default function Home() {
                 return;
             }
             
+            const memberName = memberNameRef.current.value;
             const seasonMembers = members.filter(m => m.season_id === currentSeason.id);
+            
             if (seasonMembers.some(m => m.name === memberName)) {
                 showMessage('이미 존재하는 멤버입니다.', 'error');
                 return;
@@ -1197,7 +1184,7 @@ export default function Home() {
                 name: memberName
             });
             
-            setMemberName('');
+            memberNameRef.current.value = '';
         };
         
         const seasonMembers = members.filter(m => m.season_id === currentSeason?.id);
@@ -1214,10 +1201,9 @@ export default function Home() {
                             <div className="form-group">
                                 <label>멤버 이름</label>
                                 <input
+                                    ref={memberNameRef}
                                     type="text"
                                     className="form-control"
-                                    value={memberName}
-                                    onChange={(e) => setMemberName(e.target.value)}
                                     placeholder="멤버 닉네임 입력"
                                     required
                                 />
@@ -1573,7 +1559,7 @@ export default function Home() {
                         opacity: 1; 
                         transform: translateX(-50%) translateY(0);
                     }
-                    100% { 
+100% { 
                         opacity: 0; 
                         transform: translateX(-50%) translateY(100px);
                     }
@@ -1603,10 +1589,10 @@ export default function Home() {
                     border-radius: 8px;
                     z-index: 1000;
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                    animation: slideUp 0.3s ease-out;
                     animation: slideInOut 3s ease-in-out forwards;
                     transition: all 0.3s ease;
                 }
+                
                 .error-message {
                     background: #fff2f2;
                     color: #d32f2f;
