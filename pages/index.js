@@ -1080,31 +1080,52 @@ export default function Home() {
     };
     
     // 보스 설정 - 폼 전체를 ref로 관리!
+    // 보스 설정 컴포넌트 - null 에러 해결 버전
     const BossSettings = () => {
         const formRef = useRef();
         
         useEffect(() => {
-            if (currentSeason && formRef.current) {
-                const seasonBosses = bosses.filter(b => b.season_id === currentSeason.id);
-                if (seasonBosses.length > 0) {
-                    seasonBosses.forEach(boss => {
-                        const idx = ATTRIBUTES.indexOf(boss.attribute);
-                        if (idx !== -1) {
-                            const nameInput = formRef.current[`boss-name-${idx}`];
-                            const mechanicInput = formRef.current[`boss-mechanic-${idx}`];
-                            
-                            if (nameInput) nameInput.value = boss.name;
-                            if (mechanicInput) mechanicInput.value = boss.mechanic || '';
-                            
-                            if (boss.level <= 3) {
-                                const hpInput = formRef.current[`boss-hp-${boss.level}-${idx}`];
-                                if (hpInput) hpInput.value = boss.hp.toString();
-                            }
+            // DOM이 준비되지 않았거나 currentSeason이 없으면 종료
+            if (!currentSeason || !formRef.current) return;
+            
+            const seasonBosses = bosses.filter(b => b.season_id === currentSeason.id);
+            if (seasonBosses.length === 0) return;
+            
+            // form.elements 사용하여 안전하게 접근
+            const form = formRef.current;
+            const elements = form.elements;
+            
+            // elements가 존재하는지 확인
+            if (!elements) return;
+            
+            seasonBosses.forEach(boss => {
+                const idx = ATTRIBUTES.indexOf(boss.attribute);
+                if (idx === -1) return;
+                
+                try {
+                    // name 속성으로 안전하게 접근
+                    const nameInput = elements[`boss-name-${idx}`];
+                    const mechanicInput = elements[`boss-mechanic-${idx}`];
+                    
+                    if (nameInput && nameInput.type === 'text') {
+                        nameInput.value = boss.name;
+                    }
+                    if (mechanicInput && mechanicInput.type === 'textarea') {
+                        mechanicInput.value = boss.mechanic || '';
+                    }
+                    
+                    if (boss.level <= 3) {
+                        const hpInput = elements[`boss-hp-${boss.level}-${idx}`];
+                        if (hpInput && hpInput.type === 'number') {
+                            hpInput.value = boss.hp.toString();
                         }
-                    });
+                    }
+                } catch (error) {
+                    // 개별 input 에러는 무시하고 계속 진행
+                    console.warn(`Input not found for boss ${boss.name}:`, error);
                 }
-            }
-        }, [currentSeason, bosses]);
+            });
+        }, [currentSeason?.id, bosses]);
         
         const handleSubmit = async (e) => {
             e.preventDefault();
@@ -1261,9 +1282,15 @@ export default function Home() {
     };
     
     // 멤버 설정 - Uncontrolled로 변경!
+    // 멤버 설정 컴포넌트 완성본
     const MemberSettings = () => {
-        // useRef로 변경
         const memberNameRef = useRef();
+        
+        // currentSeason.id를 명시적 의존성으로 사용
+        const seasonMembers = useMemo(() => {
+            if (!currentSeason?.id) return [];
+            return members.filter(m => m.season_id === currentSeason.id);
+        }, [members, currentSeason?.id]);
         
         const handleSubmit = async (e) => {
             e.preventDefault();
@@ -1274,8 +1301,8 @@ export default function Home() {
             }
             
             const memberName = memberNameRef.current.value;
-            const seasonMembers = members.filter(m => m.season_id === currentSeason.id);
             
+            // 중복 체크
             if (seasonMembers.some(m => m.name === memberName)) {
                 showMessage('이미 존재하는 멤버입니다.', 'error');
                 return;
@@ -1286,10 +1313,9 @@ export default function Home() {
                 name: memberName
             });
             
+            // 입력 필드 초기화
             memberNameRef.current.value = '';
         };
-        
-        const seasonMembers = members.filter(m => m.season_id === currentSeason?.id);
         
         return (
             <div>
