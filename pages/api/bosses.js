@@ -9,21 +9,17 @@ export default async function handler(req, res) {
             const { seasonId, bosses: bossData } = req.body;
             
             try {
-                // 기존 보스 삭제
-                await supabase
-                    .from('bosses')
-                    .delete()
-                    .eq('season_id', seasonId);
-                
-                // 새 보스 데이터 삽입
                 const bossesWithSeasonId = bossData.map(boss => ({
                     ...boss,
                     season_id: seasonId
                 }));
                 
+                // upsert: 있으면 UPDATE, 없으면 INSERT
                 const { error } = await supabase
                     .from('bosses')
-                    .insert(bossesWithSeasonId);
+                    .upsert(bossesWithSeasonId, {
+                        onConflict: 'season_id,attribute,level'
+                    });
                 
                 if (error) throw error;
                 
