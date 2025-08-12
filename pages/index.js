@@ -402,7 +402,7 @@ export default function Home() {
                     const bossBattles = raidBattles.filter(b => 
                         b.boss_id === boss.id && 
                         b.season_id === currentSeason.id &&
-                        b.level === level
+                        (currentLevel === 999 || b.level === currentLevel)  // 현재 레벨만
                     );
                     const totalDamage = bossBattles.reduce((sum, b) => sum + (parseInt(b.damage) || 0), 0);
                     return totalDamage >= boss.hp;
