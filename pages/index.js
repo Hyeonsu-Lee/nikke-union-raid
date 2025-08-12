@@ -475,6 +475,34 @@ export default function Home() {
         // 검색은 state 유지
         const [searchBoss, setSearchBoss] = useState('');
         const [searchDamage, setSearchDamage] = useState('');
+
+        // 자동완성 state 추가
+        const [memberSuggestions, setMemberSuggestions] = useState([]);
+        const [showSuggestions, setShowSuggestions] = useState(false);
+
+        const seasonMembers = useMemo(() => {
+            return members.filter(m => m.season_id === currentSeason?.id);
+        }, [members, currentSeason]);
+
+        // 자동완성 핸들러 추가
+        const handleMemberInput = () => {
+            const value = memberNameRef.current.value;
+            
+            if (value.length > 0) {
+                const filtered = seasonMembers.filter(m => 
+                    m.name.toLowerCase().includes(value.toLowerCase())
+                );
+                setMemberSuggestions(filtered);
+                setShowSuggestions(true);
+            } else {
+                setShowSuggestions(false);
+            }
+        };
+
+        const selectMember = (memberName) => {
+            memberNameRef.current.value = memberName;
+            setShowSuggestions(false);
+        };
         
         const handleSubmit = async (e) => {
             e.preventDefault();
@@ -541,14 +569,48 @@ export default function Home() {
                 
                 <form onSubmit={handleSubmit} style={{marginTop: '20px'}}>
                     <div className="grid-2">
-                        <div className="form-group">
+                        <div className="form-group" style={{position: 'relative'}}>
                             <label>멤버 이름</label>
                             <input
                                 ref={memberNameRef}
                                 type="text"
                                 className="form-control"
-                                placeholder="닉네임 입력"
+                                onInput={handleMemberInput}
+                                onFocus={() => memberNameRef.current.value && setShowSuggestions(true)}
+                                placeholder="닉네임 입력 또는 선택"
                             />
+                            {showSuggestions && memberSuggestions.length > 0 && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    left: 0,
+                                    right: 0,
+                                    background: 'white',
+                                    border: '2px solid #e0e0e0',
+                                    borderTop: 'none',
+                                    borderRadius: '0 0 8px 8px',
+                                    maxHeight: '150px',
+                                    overflowY: 'auto',
+                                    zIndex: 100,
+                                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                }}>
+                                    {memberSuggestions.map(member => (
+                                        <div
+                                            key={member.id}
+                                            onClick={() => selectMember(member.name)}
+                                            style={{
+                                                padding: '10px',
+                                                cursor: 'pointer',
+                                                borderBottom: '1px solid #f0f0f0'
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
+                                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                                        >
+                                            {member.name}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                         
                         <div className="form-group">
