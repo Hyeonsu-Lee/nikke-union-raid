@@ -473,6 +473,12 @@ export default function Home() {
         const handleSubmit = async (e) => {
             e.preventDefault();
             
+            // 1. 값을 변수에 저장
+            const memberName = memberNameRef.current.value;
+            const bossId = bossIdRef.current.value;
+            const deck = deckRef.current.value;
+            const damage = damageRef.current.value;
+
             if (!memberNameRef.current.value || !bossIdRef.current.value || 
                 !deckRef.current.value || !damageRef.current.value) {
                 showMessage('모든 필드를 입력해주세요.', 'error');
@@ -487,10 +493,10 @@ export default function Home() {
 
             await saveData('mock-battles', {
                 seasonId: currentSeason.id,
-                memberName: memberNameRef.current.value,
-                bossId: bossIdRef.current.value,
-                deckComposition: deckRef.current.value,
-                damage: parseInt(damageRef.current.value)
+                memberName: memberName,
+                bossId: bossId,
+                deckComposition: deck,
+                damage: parseInt(damage)
             });
             
         };
@@ -713,6 +719,12 @@ export default function Home() {
         const handleSubmit = async (e) => {
             e.preventDefault();
             
+            const memberName = memberNameRef.current.value;
+            const level = levelRef.current.value;
+            const bossId = bossIdRef.current.value;
+            const deck = deckRef.current.value;
+            const damage = damageRef.current.value;
+
             if (!memberNameRef.current.value || !bossIdRef.current.value || 
                 !deckRef.current.value || !damageRef.current.value) {
                 showMessage('모든 필드를 입력해주세요.', 'error');
@@ -734,17 +746,16 @@ export default function Home() {
             bossIdRef.current.value = '';
             deckRef.current.value = '';
             damageRef.current.value = '';
+            setShowSuggestions(false);
 
             await saveData('raid-battles', {
                 seasonId: currentSeason.id,
-                memberName: memberNameRef.current.value,
-                level: parseInt(levelRef.current.value),
-                bossId: bossIdRef.current.value,
-                deckComposition: deckRef.current.value,
-                damage: parseInt(damageRef.current.value)
+                memberName: memberName,
+                level: parseInt(level),
+                bossId: bossId,
+                deckComposition: deck,
+                damage: parseInt(damage)
             });
-            
-            setShowSuggestions(false);
         };
         
         // 레벨 변경 시 보스 목록 업데이트
@@ -1293,7 +1304,7 @@ export default function Home() {
             }
             // 입력 필드 초기화
             memberNameRef.current.value = '';
-            
+
             await saveData('members', {
                 seasonId: currentSeason.id,
                 name: memberName
