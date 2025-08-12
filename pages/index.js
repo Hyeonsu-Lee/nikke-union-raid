@@ -827,10 +827,434 @@ export default function Home() {
         );
     };
     
-    // 간단한 설정 컴포넌트들
-    const SeasonSettings = () => <div>시즌 관리 페이지 - API 연결 필요</div>;
-    const BossSettings = () => <div>보스 관리 페이지 - API 연결 필요</div>;
-    const MemberSettings = () => <div>멤버 관리 페이지 - API 연결 필요</div>;
+    // pages/index.js의 Settings 부분을 이 코드로 교체하세요
+
+    // 시즌 설정
+    const SeasonSettings = () => {
+        const [seasonForm, setSeasonForm] = useState({
+            name: '',
+            date: '',
+            copyFromSeason: ''
+        });
+        
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            
+            await saveData('seasons', {
+                name: seasonForm.name,
+                date: seasonForm.date,
+                copyFromSeason: seasonForm.copyFromSeason
+            });
+            
+            setSeasonForm({
+                name: '',
+                date: '',
+                copyFromSeason: ''
+            });
+        };
+        
+        const activateSeason = async (seasonId) => {
+            await saveData('seasons', {
+                id: seasonId,
+                isActive: true
+            }, 'PUT');
+        };
+        
+        return (
+            <div>
+                <form onSubmit={handleSubmit}>
+                    <div className="grid-2">
+                        <div className="form-group">
+                            <label>시즌 이름</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={seasonForm.name}
+                                onChange={(e) => setSeasonForm({...seasonForm, name: e.target.value})}
+                                placeholder="예: 2025년 1월 시즌"
+                                required
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>레이드 날짜</label>
+                            <input
+                                type="date"
+                                className="form-control"
+                                value={seasonForm.date}
+                                onChange={(e) => setSeasonForm({...seasonForm, date: e.target.value})}
+                                required
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="form-group">
+                        <label>이전 시즌 멤버 복사 (선택)</label>
+                        <select
+                            className="form-control"
+                            value={seasonForm.copyFromSeason}
+                            onChange={(e) => setSeasonForm({...seasonForm, copyFromSeason: e.target.value})}
+                        >
+                            <option value="">멤버 복사 안함</option>
+                            {seasons.map(season => {
+                                const seasonMemberCount = members.filter(m => m.season_id === season.id).length;
+                                return (
+                                    <option key={season.id} value={season.id}>
+                                        {season.name} ({seasonMemberCount}명)
+                                    </option>
+                                );
+                            })}
+                        </select>
+                        <small style={{color: '#666', display: 'block', marginTop: '5px'}}>
+                            선택한 시즌의 멤버 목록을 새 시즌으로 복사합니다.
+                        </small>
+                    </div>
+                    
+                    <button type="submit" className="btn btn-primary">
+                        시즌 추가
+                    </button>
+                </form>
+                
+                <h3 style={{marginTop: '30px', marginBottom: '15px'}}>시즌 목록</h3>
+                <div className="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>시즌명</th>
+                                <th>레이드 날짜</th>
+                                <th>멤버 수</th>
+                                <th>상태</th>
+                                <th>액션</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {seasons.map(season => {
+                                const seasonMemberCount = members.filter(m => m.season_id === season.id).length;
+                                return (
+                                    <tr key={season.id}>
+                                        <td>{season.name}</td>
+                                        <td>{season.date}</td>
+                                        <td>{seasonMemberCount}명</td>
+                                        <td>
+                                            {season.is_active ? 
+                                                <span className="member-status status-complete">활성</span> : 
+                                                <span className="member-status status-incomplete">비활성</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            {!season.is_active && (
+                                                <button
+                                                    className="btn btn-primary"
+                                                    onClick={() => activateSeason(season.id)}
+                                                    style={{marginRight: '5px'}}
+                                                >
+                                                    활성화
+                                                </button>
+                                            )}
+                                            <button
+                                                className="btn btn-danger"
+                                                onClick={() => deleteData('seasons', season.id)}
+                                            >
+                                                삭제
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    };
+    
+    // 보스 설정
+    const BossSettings = () => {
+        const [bossNames, setBossNames] = useState(['', '', '', '', '']);
+        const [bossMechanics, setBossMechanics] = useState(['', '', '', '', '']);
+        const [levelHPs, setLevelHPs] = useState({
+            1: ['', '', '', '', ''],
+            2: ['', '', '', '', ''],
+            3: ['', '', '', '', '']
+        });
+        
+        useEffect(() => {
+            if (currentSeason) {
+                const seasonBosses = bosses.filter(b => b.season_id === currentSeason.id);
+                if (seasonBosses.length > 0) {
+                    const names = Array(5).fill('');
+                    const mechanics = Array(5).fill('');
+                    const hps = {1: Array(5).fill(''), 2: Array(5).fill(''), 3: Array(5).fill('')};
+                    
+                    seasonBosses.forEach(boss => {
+                        const idx = ATTRIBUTES.indexOf(boss.attribute);
+                        if (idx !== -1) {
+                            names[idx] = boss.name;
+                            mechanics[idx] = boss.mechanic || '';
+                            if (boss.level <= 3) {
+                                hps[boss.level][idx] = boss.hp.toString();
+                            }
+                        }
+                    });
+                    
+                    setBossNames(names);
+                    setBossMechanics(mechanics);
+                    setLevelHPs(hps);
+                }
+            }
+        }, [currentSeason, bosses]);
+        
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            
+            if (!currentSeason) {
+                showMessage('먼저 시즌을 활성화해주세요.', 'error');
+                return;
+            }
+            
+            const newBosses = [];
+            
+            ATTRIBUTES.forEach((attr, idx) => {
+                if (!bossNames[idx]) return;
+                
+                [1, 2, 3].forEach(level => {
+                    if (levelHPs[level][idx]) {
+                        newBosses.push({
+                            name: bossNames[idx],
+                            attribute: attr,
+                            level: level,
+                            hp: parseInt(levelHPs[level][idx]),
+                            mechanic: bossMechanics[idx]
+                        });
+                    }
+                });
+                
+                newBosses.push({
+                    name: bossNames[idx],
+                    attribute: attr,
+                    level: 999,
+                    hp: 0,
+                    mechanic: bossMechanics[idx]
+                });
+            });
+            
+            await saveData('bosses', {
+                seasonId: currentSeason.id,
+                bosses: newBosses
+            });
+        };
+        
+        return (
+            <div>
+                {!currentSeason ? (
+                    <div className="error-message">
+                        먼저 시즌을 활성화해주세요.
+                    </div>
+                ) : (
+                    <form onSubmit={handleSubmit}>
+                        <h3 style={{marginBottom: '15px'}}>보스 이름 설정</h3>
+                        <div className="boss-input-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px'}}>
+                            {ATTRIBUTES.map((attr, idx) => (
+                                <div key={attr} className="boss-input-card" style={{background: '#f8f9fa', padding: '15px', borderRadius: '8px'}}>
+                                    <h4 className={`attribute-${attr}`} style={{padding: '5px', borderRadius: '5px', textAlign: 'center', marginBottom: '10px'}}>
+                                        {attr}
+                                    </h4>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="보스 이름"
+                                        value={bossNames[idx]}
+                                        onChange={(e) => {
+                                            const newNames = [...bossNames];
+                                            newNames[idx] = e.target.value;
+                                            setBossNames(newNames);
+                                        }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <h3 style={{marginTop: '30px', marginBottom: '15px'}}>레벨별 HP 설정</h3>
+                        {[1, 2, 3].map(level => (
+                            <div key={level} style={{marginBottom: '20px'}}>
+                                <h4 style={{marginBottom: '10px', color: '#666'}}>레벨 {level}</h4>
+                                <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px'}}>
+                                    {ATTRIBUTES.map((attr, idx) => (
+                                        <div key={attr}>
+                                            <label style={{fontSize: '12px', marginBottom: '5px', display: 'block'}}>
+                                                {attr} HP
+                                            </label>
+                                            <input
+                                                type="number"
+                                                className="form-control"
+                                                placeholder="HP 입력"
+                                                value={levelHPs[level][idx]}
+                                                onChange={(e) => {
+                                                    const newHPs = {...levelHPs};
+                                                    newHPs[level][idx] = e.target.value;
+                                                    setLevelHPs(newHPs);
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                        
+                        <h3 style={{marginTop: '30px', marginBottom: '15px'}}>보스 기믹 (선택)</h3>
+                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px'}}>
+                            {ATTRIBUTES.map((attr, idx) => (
+                                <div key={attr}>
+                                    <label style={{fontSize: '12px', marginBottom: '5px', display: 'block'}}>
+                                        {attr} 기믹
+                                    </label>
+                                    <textarea
+                                        className="form-control"
+                                        rows="3"
+                                        placeholder="기믹 설명"
+                                        value={bossMechanics[idx]}
+                                        onChange={(e) => {
+                                            const newMechanics = [...bossMechanics];
+                                            newMechanics[idx] = e.target.value;
+                                            setBossMechanics(newMechanics);
+                                        }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <button type="submit" className="btn btn-primary" style={{marginTop: '20px'}}>
+                            보스 정보 일괄 저장
+                        </button>
+                    </form>
+                )}
+                
+                <h3 style={{marginTop: '30px', marginBottom: '15px'}}>현재 시즌 보스 목록</h3>
+                <div className="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>레벨</th>
+                                <th>이름</th>
+                                <th>속성</th>
+                                <th>HP</th>
+                                <th>기믹</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {bosses
+                                .filter(b => b.season_id === currentSeason?.id)
+                                .sort((a, b) => {
+                                    if (a.level !== b.level) return a.level - b.level;
+                                    return ATTRIBUTES.indexOf(a.attribute) - ATTRIBUTES.indexOf(b.attribute);
+                                })
+                                .map(boss => (
+                                    <tr key={boss.id}>
+                                        <td>Lv.{boss.level === 999 ? '∞' : boss.level}</td>
+                                        <td>{boss.name}</td>
+                                        <td>
+                                            <span className={`boss-attribute attribute-${boss.attribute}`}>
+                                                {boss.attribute}
+                                            </span>
+                                        </td>
+                                        <td>{boss.level === 999 ? '무한' : boss.hp.toLocaleString()}</td>
+                                        <td>{boss.mechanic || '-'}</td>
+                                    </tr>
+                                ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    };
+    
+    // 멤버 설정
+    const MemberSettings = () => {
+        const [memberName, setMemberName] = useState('');
+        
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            
+            if (!currentSeason) {
+                showMessage('먼저 시즌을 활성화해주세요.', 'error');
+                return;
+            }
+            
+            const seasonMembers = members.filter(m => m.season_id === currentSeason.id);
+            if (seasonMembers.some(m => m.name === memberName)) {
+                showMessage('이미 존재하는 멤버입니다.', 'error');
+                return;
+            }
+            
+            await saveData('members', {
+                seasonId: currentSeason.id,
+                name: memberName
+            });
+            
+            setMemberName('');
+        };
+        
+        const seasonMembers = members.filter(m => m.season_id === currentSeason?.id);
+        
+        return (
+            <div>
+                {!currentSeason ? (
+                    <div className="error-message">
+                        먼저 시즌을 활성화해주세요.
+                    </div>
+                ) : (
+                    <>
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>멤버 이름</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={memberName}
+                                    onChange={(e) => setMemberName(e.target.value)}
+                                    placeholder="멤버 닉네임 입력"
+                                    required
+                                />
+                            </div>
+                            
+                            <button type="submit" className="btn btn-primary">
+                                멤버 추가
+                            </button>
+                        </form>
+                        
+                        <h3 style={{marginTop: '30px', marginBottom: '15px'}}>
+                            {currentSeason.name} 멤버 목록 ({seasonMembers.length}명)
+                        </h3>
+                        <div className="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>멤버 이름</th>
+                                        <th>액션</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {seasonMembers.map(member => (
+                                        <tr key={member.id}>
+                                            <td>{member.name}</td>
+                                            <td>
+                                                <button
+                                                    className="btn btn-danger"
+                                                    onClick={() => deleteData('members', member.id)}
+                                                >
+                                                    삭제
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
+            </div>
+        );
+    };
 // 메인 렌더링
     return (
         <div className="app-container">
