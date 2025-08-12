@@ -485,6 +485,11 @@ export default function Home() {
             const deck = deckRef.current.value;
             const damage = damageRef.current.value.replace(/,/g, '');
 
+            if (!seasonMembers.some(m => m.name === memberName)) {
+                showMessage('등록되지 않은 멤버입니다.', 'error');
+                return;
+            }
+
             // 2. validation (변수로!)
             if (!memberName || !bossId || !deck || !damage) {
                 showMessage('모든 필드를 입력해주세요.', 'error');
@@ -731,6 +736,11 @@ export default function Home() {
             const bossId = bossIdRef.current.value;
             const deck = deckRef.current.value;
             const damage = damageRef.current.value.replace(/,/g, '');
+
+            if (!seasonMembers.some(m => m.name === memberName)) {
+                showMessage('등록되지 않은 멤버입니다.', 'error');
+                return;
+            }
 
             // 2. validation (변수로!)
             if (!memberName || !bossId || !deck || !damage) {
