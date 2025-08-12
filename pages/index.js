@@ -470,6 +470,23 @@ export default function Home() {
         const [searchBoss, setSearchBoss] = useState('');
         const [searchDamage, setSearchDamage] = useState('');
         
+        const formatNumber = (value) => {
+            const number = value.replace(/,/g, '');
+            if (!number) return '';
+            return parseInt(number).toLocaleString();
+        };
+        
+        const handleDamageInput = (e) => {
+            const cursorPos = e.target.selectionStart;
+            const oldLength = e.target.value.length;
+            
+            e.target.value = formatNumber(e.target.value);
+            
+            const newLength = e.target.value.length;
+            const diff = newLength - oldLength;
+            e.target.setSelectionRange(cursorPos + diff, cursorPos + diff);
+        };
+
         const handleSubmit = async (e) => {
             e.preventDefault();
             
@@ -477,10 +494,10 @@ export default function Home() {
             const memberName = memberNameRef.current.value;
             const bossId = bossIdRef.current.value;
             const deck = deckRef.current.value;
-            const damage = damageRef.current.value;
+            const damage = damageRef.current.value.replace(/,/g, '');
 
             if (!memberNameRef.current.value || !bossIdRef.current.value || 
-                !deckRef.current.value || !damageRef.current.value) {
+                !deckRef.current.value || !damageRef.current.value.replace(/,/g, '')) {
                 showMessage('모든 필드를 입력해주세요.', 'error');
                 return;
             }
@@ -566,6 +583,7 @@ export default function Home() {
                                 ref={damageRef}
                                 type="number"
                                 className="form-control"
+                                onInput={handleDamageInput}
                                 placeholder="대미지 입력"
                             />
                         </div>
@@ -693,6 +711,23 @@ export default function Home() {
         const [memberSuggestions, setMemberSuggestions] = useState([]);
         const [showSuggestions, setShowSuggestions] = useState(false);
         
+        const formatNumber = (value) => {
+            const number = value.replace(/,/g, '');
+            if (!number) return '';
+            return parseInt(number).toLocaleString();
+        };
+        
+        const handleDamageInput = (e) => {
+            const cursorPos = e.target.selectionStart;
+            const oldLength = e.target.value.length;
+            
+            e.target.value = formatNumber(e.target.value);
+            
+            const newLength = e.target.value.length;
+            const diff = newLength - oldLength;
+            e.target.setSelectionRange(cursorPos + diff, cursorPos + diff);
+        };
+
         const seasonMembers = useMemo(() => {
             return members.filter(m => m.season_id === currentSeason?.id);
         }, [members, currentSeason]);
@@ -723,10 +758,10 @@ export default function Home() {
             const level = levelRef.current.value;
             const bossId = bossIdRef.current.value;
             const deck = deckRef.current.value;
-            const damage = damageRef.current.value;
+            const damage = damageRef.current.value.replace(/,/g, '');
 
             if (!memberNameRef.current.value || !bossIdRef.current.value || 
-                !deckRef.current.value || !damageRef.current.value) {
+                !deckRef.current.value || !damageRef.current.value.replace(/,/g, '')) {
                 showMessage('모든 필드를 입력해주세요.', 'error');
                 return;
             }
@@ -859,6 +894,7 @@ export default function Home() {
                                 ref={damageRef}
                                 type="number"
                                 className="form-control"
+                                onInput={handleDamageInput}
                                 placeholder="대미지 입력"
                             />
                         </div>
@@ -1207,6 +1243,7 @@ export default function Home() {
                                                 name={`boss-hp-${level}-${idx}`}
                                                 type="number"
                                                 className="form-control"
+                                                onInput={handleHPInput}
                                                 placeholder="HP 입력"
                                             />
                                         </div>
