@@ -16,7 +16,7 @@ export default function Home() {
     const [mockBattles, setMockBattles] = useState([]);
     const [raidBattles, setRaidBattles] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState(null);
+    const [message, setMessage] = useState([]);
     
     // 초기 데이터 로드
     useEffect(() => {
@@ -80,8 +80,14 @@ export default function Home() {
     };
     
     const showMessage = (text, type = 'info') => {
-        setMessage({ text, type });
-        setTimeout(() => setMessage(null), 3000);
+        const id = Date.now();
+        const newMessage = { id, text, type };
+        
+        setMessages(prev => [...prev, newMessage]);
+        
+        setTimeout(() => {
+            setMessages(prev => prev.filter(msg => msg.id !== id));
+        }, 3000);
     };
     
     // 대시보드 컴포넌트
@@ -1556,6 +1562,24 @@ export default function Home() {
                         transform: translateY(0);
                     }
                 }
+                @keyframes slideInOut {
+                    0% { 
+                        opacity: 0; 
+                        transform: translateX(-50%) translateY(100px);
+                    }
+                    10% { 
+                        opacity: 1; 
+                        transform: translateX(-50%) translateY(0);
+                    }
+                    90% { 
+                        opacity: 1; 
+                        transform: translateX(-50%) translateY(0);
+                    }
+                    100% { 
+                        opacity: 0; 
+                        transform: translateX(-50%) translateY(100px);
+                    }
+                }
                 
                 .detail-item {
                     padding: 8px 0;
@@ -1582,6 +1606,8 @@ export default function Home() {
                     z-index: 1000;
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                     animation: slideUp 0.3s ease-out;
+                    animation: slideInOut 3s ease-in-out forwards;
+                    transition: all 0.3s ease;
                 }
                 .error-message {
                     background: #fff2f2;
@@ -1652,11 +1678,22 @@ export default function Home() {
                 </div>
             </div>
             
-            {message && (
-                <div className={message.type === 'error' ? 'error-message' : 'success-message'}>
-                    {message.text}
+            {messages.map(msg => (
+                <div 
+                    key={msg.id}
+                    className={msg.type === 'error' ? 'error-message' : 'success-message'}
+                    style={{
+                        position: 'fixed',
+                        bottom: `${20 + (messages.indexOf(msg) * 60)}px`,  // 메시지 겹치지 않게
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        zIndex: 1000 + messages.indexOf(msg)
+                    }}
+                >
+                    {msg.text}
                 </div>
-            )}
+            ))}
+
             
             <div className="content-area">
                 {loading && <div className="loading">로딩중...</div>}
