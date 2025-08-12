@@ -2,7 +2,6 @@
 // 이 파일을 pages/index.js에 복사하세요
 
 import React, { useState, useEffect, useMemo, Fragment } from 'react'; // ← React 추가!
-import { supabase } from '../lib/supabase';
 
 // 속성 정의
 const ATTRIBUTES = ['풍압', '철갑', '수냉', '작열', '전격'];
@@ -21,37 +20,7 @@ export default function Home() {
     
     // 초기 데이터 로드
     useEffect(() => {
-        loadData(); // 초기 데이터 로드
-        
-        // 실시간 구독 설정
-        const channel = supabase
-            .channel('db-changes')
-            .on('postgres_changes', 
-                { event: '*', schema: 'public', table: 'seasons' }, 
-                () => loadData()
-            )
-            .on('postgres_changes', 
-                { event: '*', schema: 'public', table: 'members' }, 
-                () => loadData()
-            )
-            .on('postgres_changes', 
-                { event: '*', schema: 'public', table: 'bosses' }, 
-                () => loadData()
-            )
-            .on('postgres_changes', 
-                { event: '*', schema: 'public', table: 'mock_battles' }, 
-                () => loadData()
-            )
-            .on('postgres_changes', 
-                { event: '*', schema: 'public', table: 'raid_battles' }, 
-                () => loadData()
-            )
-            .subscribe();
-        
-        // 정리 함수
-        return () => {
-            supabase.removeChannel(channel);
-        };
+      loadData();
     }, []);
     
     const loadData = async () => {
