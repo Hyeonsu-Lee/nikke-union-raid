@@ -53,7 +53,7 @@ export default function Home() {
             
             if (res.ok) {
                 showMessage('데이터가 저장되었습니다.', 'success');
-                await loadData();
+                //await loadData();
             }
         } catch (error) {
             showMessage('저장 실패: ' + error.message, 'error');
@@ -68,7 +68,7 @@ export default function Home() {
             
             if (res.ok) {
                 showMessage('삭제되었습니다.', 'success');
-                await loadData();
+                //await loadData();
             }
         } catch (error) {
             showMessage('삭제 실패: ' + error.message, 'error');
