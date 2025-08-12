@@ -569,7 +569,7 @@ export default function Home() {
                             <label>대미지</label>
                             <input
                                 ref={damageRef}
-                                type="number"
+                                type="text"
                                 className="form-control"
                                 onBlur={formatNumberInput} 
                                 placeholder="대미지 입력"
@@ -863,7 +863,7 @@ export default function Home() {
                             <label>대미지</label>
                             <input
                                 ref={damageRef}
-                                type="number"
+                                type="text"
                                 className="form-control"
                                 onBlur={formatNumberInput}
                                 placeholder="대미지 입력"
@@ -975,15 +975,19 @@ export default function Home() {
         const handleSubmit = async (e) => {
             e.preventDefault();
             
+            const seasonName = nameRef.current.value;
+            const seasonDate = dateRef.current.value;
+            const copyFromSeasonId = copyRef.current.value;
+
             // 초기화
             nameRef.current.value = '';
             dateRef.current.value = '';
             copyRef.current.value = '';
 
             await saveData('seasons', {
-                name: nameRef.current.value,
-                date: dateRef.current.value,
-                copyFromSeason: copyRef.current.value
+                name: seasonName,
+                date: seasonDate,
+                copyFromSeason: copyFromSeasonId
             });
         };
         
@@ -1148,7 +1152,9 @@ export default function Home() {
                 if (!name) return;
                 
                 [1, 2, 3].forEach(level => {
-                    const hp = formData.get(`boss-hp-${level}-${idx}`);
+                    const hpValue = formData.get(`boss-hp-${level}-${idx}`);
+                    const hp = hpValue ? hpValue.replace(/,/g, '') : '';
+
                     if (hp) {
                         newBosses.push({
                             name,
