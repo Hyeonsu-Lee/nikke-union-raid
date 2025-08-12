@@ -1081,51 +1081,58 @@ export default function Home() {
     
     // 보스 설정 - 폼 전체를 ref로 관리!
     // 보스 설정 컴포넌트 - null 에러 해결 버전
+    // 보스 설정 컴포넌트 - 다른 탭에서도 에러 안나도록 수정
     const BossSettings = () => {
         const formRef = useRef();
         
         useEffect(() => {
+            // 보스 탭이 아니면 실행하지 않음
+            if (activeSettingTab !== 'boss') return;
+            
             // DOM이 준비되지 않았거나 currentSeason이 없으면 종료
             if (!currentSeason || !formRef.current) return;
             
             const seasonBosses = bosses.filter(b => b.season_id === currentSeason.id);
             if (seasonBosses.length === 0) return;
             
-            // form.elements 사용하여 안전하게 접근
-            const form = formRef.current;
-            const elements = form.elements;
-            
-            // elements가 존재하는지 확인
-            if (!elements) return;
-            
-            seasonBosses.forEach(boss => {
-                const idx = ATTRIBUTES.indexOf(boss.attribute);
-                if (idx === -1) return;
+            // 다음 렌더링 사이클에서 실행
+            const timer = setTimeout(() => {
+                if (!formRef.current) return;
                 
-                try {
-                    // name 속성으로 안전하게 접근
-                    const nameInput = elements[`boss-name-${idx}`];
-                    const mechanicInput = elements[`boss-mechanic-${idx}`];
+                const form = formRef.current;
+                const elements = form.elements;
+                
+                if (!elements) return;
+                
+                seasonBosses.forEach(boss => {
+                    const idx = ATTRIBUTES.indexOf(boss.attribute);
+                    if (idx === -1) return;
                     
-                    if (nameInput && nameInput.type === 'text') {
-                        nameInput.value = boss.name;
-                    }
-                    if (mechanicInput && mechanicInput.type === 'textarea') {
-                        mechanicInput.value = boss.mechanic || '';
-                    }
-                    
-                    if (boss.level <= 3) {
-                        const hpInput = elements[`boss-hp-${boss.level}-${idx}`];
-                        if (hpInput && hpInput.type === 'number') {
-                            hpInput.value = boss.hp.toString();
+                    try {
+                        const nameInput = elements[`boss-name-${idx}`];
+                        const mechanicInput = elements[`boss-mechanic-${idx}`];
+                        
+                        if (nameInput) {
+                            nameInput.value = boss.name;
                         }
+                        if (mechanicInput) {
+                            mechanicInput.value = boss.mechanic || '';
+                        }
+                        
+                        if (boss.level <= 3) {
+                            const hpInput = elements[`boss-hp-${boss.level}-${idx}`];
+                            if (hpInput) {
+                                hpInput.value = boss.hp.toString();
+                            }
+                        }
+                    } catch (error) {
+                        // 에러 무시
                     }
-                } catch (error) {
-                    // 개별 input 에러는 무시하고 계속 진행
-                    console.warn(`Input not found for boss ${boss.name}:`, error);
-                }
-            });
-        }, [currentSeason?.id, bosses]);
+                });
+            }, 0);
+            
+            return () => clearTimeout(timer);
+        }, [currentSeason?.id, bosses, activeSettingTab]); // activeSettingTab 의존성 추가
         
         const handleSubmit = async (e) => {
             e.preventDefault();
@@ -1280,7 +1287,6 @@ export default function Home() {
             </div>
         );
     };
-    
     // 멤버 설정 - Uncontrolled로 변경!
     // 멤버 설정 컴포넌트 완성본
     const MemberSettings = () => {
