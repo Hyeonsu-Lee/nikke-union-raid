@@ -1865,7 +1865,15 @@ export default function Home() {
             `}</style>
             
             <div className="header">
-                <h1>니케 유니온 레이드 관제 시스템</h1>
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
+                    <h1>니케 유니온 레이드 관제 시스템</h1>
+                    <button 
+                        className="btn btn-secondary"
+                        onClick={() => loadData()}
+                    >
+                        🔄 갱신
+                    </button>
+                </div>
                 <div className="nav-tabs">
                     <button 
                         className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
