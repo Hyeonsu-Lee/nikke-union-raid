@@ -1243,7 +1243,7 @@ export default function Home() {
                                             </label>
                                             <input
                                                 name={`boss-hp-${level}-${idx}`}
-                                                type="number"
+                                                type="text"
                                                 className="form-control"
                                                 onInput={handleHPInput}
                                                 placeholder="HP 입력"
