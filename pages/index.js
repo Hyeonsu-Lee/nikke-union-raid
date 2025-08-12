@@ -1289,14 +1289,13 @@ export default function Home() {
                 showMessage('이미 존재하는 멤버입니다.', 'error');
                 return;
             }
-            
+            // 입력 필드 초기화
+            memberNameRef.current.value = '';
             await saveData('members', {
                 seasonId: currentSeason.id,
                 name: memberName
             });
             
-            // 입력 필드 초기화
-            memberNameRef.current.value = '';
         };
         
         return (
