@@ -25,7 +25,8 @@ export default function Home() {
         
     }, []);
     const formatNumberInput = (e) => {
-        const value = e.target.value.replace(/,/g, '');
+        // 숫자가 아닌 문자 모두 제거
+        const value = e.target.value.replace(/[^0-9]/g, '');
         if (value !== '') {
             e.target.value = parseInt(value).toLocaleString();
         }
@@ -1155,7 +1156,7 @@ export default function Home() {
                     const hpValue = formData.get(`boss-hp-${level}-${idx}`);
                     const hp = hpValue ? hpValue.replace(/,/g, '') : '';
 
-                    if (hp) {
+                    if (hp && hp !== '0') {
                         newBosses.push({
                             name,
                             attribute: attr,
