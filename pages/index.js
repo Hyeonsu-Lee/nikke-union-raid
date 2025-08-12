@@ -473,6 +473,7 @@ export default function Home() {
         const formatNumber = (value) => {
             const number = value.replace(/,/g, '');
             if (!number) return '';
+            if (isNaN(number)) return value; // NaN 체크 추가
             return parseInt(number).toLocaleString();
         };
         
@@ -714,6 +715,7 @@ export default function Home() {
         const formatNumber = (value) => {
             const number = value.replace(/,/g, '');
             if (!number) return '';
+            if (isNaN(number)) return value; // NaN 체크 추가
             return parseInt(number).toLocaleString();
         };
         
@@ -1151,7 +1153,7 @@ export default function Home() {
                             
                             if (boss.level <= 3) {
                                 const hpInput = formRef.current[`boss-hp-${boss.level}-${idx}`];
-                                if (hpInput) hpInput.value = boss.hp.toString();
+                                if (hpInput) hpInput.value = boss.hp.toLocaleString();
                             }
                         }
                     });
