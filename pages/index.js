@@ -37,8 +37,6 @@ export default function Home() {
             setIsLoggedIn(true);
             // unionId를 가지고 데이터 로드
             loadData(auth.unionId).finally(() => {
-                console.log('loadData 완료');
-                console.log('seasons:', seasons);  // 확인
                 setLoading(false);
             });
         } else {
@@ -130,9 +128,9 @@ export default function Home() {
             if (!currentSeason || forceSeasonReload) {
                 const res = await fetch(`/api/data?unionId=${currentUnionId}`);
                 const data = await res.json();
-                console.log('받아온 시즌 데이터:', data.seasons);
+                
                 setSeasons(data.seasons || []);
-                console.log('seasons state 업데이트 후:', data.seasons);
+                
                 // 활성 시즌 찾기
                 const activeSeason = (data.seasons || []).find(s => s.is_active);
                 if (activeSeason) {
