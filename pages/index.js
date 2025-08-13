@@ -1673,22 +1673,16 @@ export default function Home() {
                                     padding: '15px',
                                     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                                     zIndex: 100,
-                                    minWidth: '200px',
-                                    maxHeight: '300px',
-                                    overflowY: 'auto'
+                                    minWidth: '200px'
+                                    // maxHeight와 overflowY 제거
                                 }}>
                                     <strong style={{fontSize: '14px'}}>{hoveredTimeRange}</strong>
                                     <div style={{marginTop: '10px'}}>
-                                        {hourlyAvailability[hoveredTimeRange].slice(0, 20).map((member, idx) => (
+                                        {hourlyAvailability[hoveredTimeRange].map((member, idx) => (  // slice 제거
                                             <div key={idx} style={{fontSize: '12px', marginTop: '3px'}}>
                                                 • {member.name} {member.completed && '(완료)'}
                                             </div>
                                         ))}
-                                        {hourlyAvailability[hoveredTimeRange].length > 20 && (
-                                            <div style={{fontSize: '12px', marginTop: '5px', color: '#666'}}>
-                                                • ... {hourlyAvailability[hoveredTimeRange].length - 20}명 더
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             )}
