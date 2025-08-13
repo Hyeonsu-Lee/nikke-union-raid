@@ -1568,29 +1568,6 @@ export default function Home() {
                 
                 {/* 멤버별 상세 그리드 */}
                 <h3 style={{marginBottom: '15px'}}>멤버별 참여 현황</h3>
-                {/* 범례 추가 */}
-                <div style={{
-                    background: '#f0f0f0',
-                    padding: '10px 15px',
-                    borderRadius: '8px',
-                    marginBottom: '15px',
-                    display: 'flex',
-                    gap: '20px',
-                    flexWrap: 'wrap',
-                    fontSize: '13px'
-                }}>
-                    <div style={{fontWeight: 'bold', marginRight: '10px'}}>상태:</div>
-                    <span>🟢 완료(시간 내)</span>
-                    <span>🟡 완료(시간 외)</span>
-                    <span>🟠 진행중</span>
-                    <span>🔵 대기중</span>
-                    <span>🔴 미참여</span>
-                    <div style={{width: '100%', height: '1px'}}></div>
-                    <div style={{fontWeight: 'bold', marginRight: '10px'}}>시간준수:</div>
-                    <span>✅ 시간 내 참여</span>
-                    <span>⚠️ 시간 외 참여</span>
-                    <span>- 미참여</span>
-                </div>
                 <div className="table-container">
                     <table>
                         <thead>
@@ -1609,7 +1586,19 @@ export default function Home() {
                                 <tr key={idx}>
                                     <td>{stat.name}</td>
                                     <td style={{fontSize: '12px'}}>{stat.schedule}</td>
-                                    <td style={{fontSize: '18px', textAlign: 'center'}}>{stat.status}</td>
+                                    <td style={{
+                                        fontSize: '18px', 
+                                        textAlign: 'center',
+                                        cursor: 'help'
+                                    }} title={
+                                        stat.status === '🟢' ? '완료 (시간 내)' :
+                                        stat.status === '🟡' ? '완료 (시간 외)' :
+                                        stat.status === '🟠' ? '진행중' :
+                                        stat.status === '🔵' ? '대기중' :
+                                        '미참여'
+                                    }>
+                                        {stat.status}
+                                    </td>
                                     <td>{stat.firstBattle}</td>
                                     <td>{stat.lastBattle}</td>
                                     <td>
@@ -1620,7 +1609,17 @@ export default function Home() {
                                             {stat.deckUsed}/3
                                         </span>
                                     </td>
-                                    <td style={{fontSize: '16px', textAlign: 'center'}}>{stat.timeCompliance}</td>
+                                    <td style={{
+                                        fontSize: '16px', 
+                                        textAlign: 'center',
+                                        cursor: 'help'
+                                    }} title={
+                                        stat.timeCompliance === '✅' ? '시간 내 참여' :
+                                        stat.timeCompliance === '⚠️' ? '시간 외 참여' :
+                                        '미참여'
+                                    }>
+                                        {stat.timeCompliance}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
