@@ -1127,6 +1127,389 @@ export default function Home() {
         );
     };
     
+    // 스케줄 컴포넌트
+    const Schedule = () => {
+        const [hoveredHour, setHoveredHour] = useState(null);
+        const [currentTime, setCurrentTime] = useState(new Date());
+        
+        // 1분마다 현재 시간 업데이트
+        useEffect(() => {
+            const timer = setInterval(() => {
+                setCurrentTime(new Date());
+            }, 60000);
+            return () => clearInterval(timer);
+        }, []);
+        
+        // 현재 시간을 5-29 형식으로 변환
+        const getCurrentHour = () => {
+            const hour = currentTime.getHours();
+            return hour < 5 ? hour + 24 : hour;
+        };
+        
+        // 멤버별 스케줄 정보 매핑
+        const seasonMembers = useMemo(() => {
+            if (!currentSeason?.id) return [];
+            return members.filter(m => m.season_id === currentSeason.id);
+        }, [members, currentSeason?.id]);
+        
+        const memberSchedulesMap = useMemo(() => {
+            const map = {};
+            memberSchedules.forEach(schedule => {
+                if (schedule.season_id === currentSeason?.id) {
+                    map[schedule.member_id] = schedule;
+                }
+            });
+            return map;
+        }, [memberSchedules, currentSeason?.id]);
+        
+        // 시간대별 참여 가능 인원 계산
+        const hourlyAvailability = useMemo(() => {
+            const availability = {};
+            const hourSlots = [];
+            
+            // 5시부터 다음날 5시까지
+            for (let h = 5; h <= 29; h++) {
+                hourSlots.push(h);
+                availability[h] = [];
+            }
+            
+            seasonMembers.forEach(member => {
+                const schedule = memberSchedulesMap[member.id];
+                if (schedule?.time_slots) {
+                    const ranges = schedule.time_slots.split(',');
+                    ranges.forEach(range => {
+                        const [startStr, endStr] = range.split('-');
+                        if (startStr && endStr) {
+                            const startHour = parseInt(startStr.split(':')[0]);
+                            const endHour = parseInt(endStr.split(':')[0]);
+                            
+                            for (let h = startHour; h < endHour; h++) {
+                                if (availability[h]) {
+                                    availability[h].push(member);
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+            
+            return { availability, hourSlots };
+        }, [seasonMembers, memberSchedulesMap]);
+        
+        // 멤버별 통계 계산
+        const memberStats = useMemo(() => {
+            return seasonMembers.map(member => {
+                const schedule = memberSchedulesMap[member.id];
+                const memberBattles = raidBattles.filter(b => 
+                    b.season_id === currentSeason?.id && b.member_name === member.name
+                );
+                
+                // 첫 참여와 마지막 참여 시간
+                const sortedBattles = [...memberBattles].sort((a, b) => 
+                    new Date(a.timestamp) - new Date(b.timestamp)
+                );
+                const firstBattle = sortedBattles[0];
+                const lastBattle = sortedBattles[sortedBattles.length - 1];
+                
+                // 스케줄 준수 여부 확인
+                let scheduleCompliance = '미참여';
+                if (memberBattles.length > 0) {
+                    scheduleCompliance = '완료';
+                    
+                    if (schedule?.time_slots && firstBattle) {
+                        const firstBattleTime = new Date(firstBattle.timestamp);
+                        const battleHour = firstBattleTime.getHours();
+                        const adjustedHour = battleHour < 5 ? battleHour + 24 : battleHour;
+                        
+                        // 스케줄된 시간인지 확인
+                        let isInSchedule = false;
+                        const ranges = schedule.time_slots.split(',');
+                        ranges.forEach(range => {
+                            const [startStr, endStr] = range.split('-');
+                            if (startStr && endStr) {
+                                const startHour = parseInt(startStr.split(':')[0]);
+                                const endHour = parseInt(endStr.split(':')[0]);
+                                if (adjustedHour >= startHour && adjustedHour < endHour) {
+                                    isInSchedule = true;
+                                }
+                            }
+                        });
+                        
+                        if (!isInSchedule && memberBattles.length === 3) {
+                            scheduleCompliance = '완료(시간외)';
+                        } else if (memberBattles.length < 3) {
+                            scheduleCompliance = '진행중';
+                        }
+                    }
+                } else if (schedule?.time_slots) {
+                    // 현재 시간이 스케줄 시간을 모두 지났는지 확인
+                    const currentHour = getCurrentHour();
+                    let hasUpcomingSchedule = false;
+                    
+                    const ranges = schedule.time_slots.split(',');
+                    ranges.forEach(range => {
+                        const [, endStr] = range.split('-');
+                        if (endStr) {
+                            const endHour = parseInt(endStr.split(':')[0]);
+                            if (endHour > currentHour) {
+                                hasUpcomingSchedule = true;
+                            }
+                        }
+                    });
+                    
+                    scheduleCompliance = hasUpcomingSchedule ? '대기중' : '미참여';
+                }
+                
+                return {
+                    member,
+                    schedule: schedule?.time_slots || '미설정',
+                    deckUsed: memberBattles.length,
+                    firstBattle: firstBattle ? new Date(firstBattle.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-',
+                    lastBattle: lastBattle ? new Date(lastBattle.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-',
+                    scheduleCompliance
+                };
+            });
+        }, [seasonMembers, memberSchedulesMap, raidBattles, currentSeason]);
+        
+        // 시간 표시 헬퍼
+        const getHourDisplay = (hour) => {
+            if (hour >= 24) {
+                return `${hour - 24}`;
+            }
+            return `${hour}`;
+        };
+        
+        // 최대 인원수 계산 (막대 그래프 높이 계산용)
+        const maxAvailability = Math.max(...hourlyAvailability.hourSlots.map(h => 
+            hourlyAvailability.availability[h].length
+        ), 1);
+        
+        if (!currentSeason) {
+            return (
+                <div className="error-message">
+                    현재 활성화된 시즌이 없습니다. 설정에서 시즌을 생성해주세요.
+                </div>
+            );
+        }
+        
+        return (
+            <div>
+                <h2>스케줄 관리</h2>
+                
+                {/* 타임라인 뷰 */}
+                <div style={{
+                    background: '#f8f9fa',
+                    borderRadius: '10px',
+                    padding: '20px',
+                    marginTop: '20px',
+                    marginBottom: '30px'
+                }}>
+                    <h3 style={{marginBottom: '20px'}}>참여 가능 인원 타임라인</h3>
+                    
+                    {/* 시간 축 */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        height: '150px',
+                        marginBottom: '10px',
+                        position: 'relative'
+                    }}>
+                        {hourlyAvailability.hourSlots.map(hour => {
+                            const memberCount = hourlyAvailability.availability[hour].length;
+                            const heightPercent = (memberCount / maxAvailability) * 100;
+                            const isCurrentHour = hour === getCurrentHour();
+                            
+                            return (
+                                <div
+                                    key={hour}
+                                    style={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        position: 'relative',
+                                        cursor: 'pointer'
+                                    }}
+                                    onMouseEnter={() => setHoveredHour(hour)}
+                                    onMouseLeave={() => setHoveredHour(null)}
+                                >
+                                    {/* 현재 시간 표시 */}
+                                    {isCurrentHour && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '-20px',
+                                            background: '#ff6b6b',
+                                            color: 'white',
+                                            padding: '2px 8px',
+                                            borderRadius: '10px',
+                                            fontSize: '12px',
+                                            whiteSpace: 'nowrap'
+                                        }}>
+                                            현재
+                                        </div>
+                                    )}
+                                    
+                                    {/* 막대 */}
+                                    <div style={{
+                                        width: '20px',
+                                        height: `${heightPercent}%`,
+                                        background: isCurrentHour ? '#ff6b6b' : '#667eea',
+                                        borderRadius: '4px 4px 0 0',
+                                        transition: 'all 0.3s',
+                                        marginTop: 'auto'
+                                    }} />
+                                    
+                                    {/* 인원수 */}
+                                    <div style={{
+                                        fontSize: '10px',
+                                        marginTop: '5px',
+                                        fontWeight: isCurrentHour ? 'bold' : 'normal'
+                                    }}>
+                                        {memberCount}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    
+                    {/* 시간 레이블 */}
+                    <div style={{
+                        display: 'flex',
+                        borderTop: '2px solid #ddd',
+                        paddingTop: '5px'
+                    }}>
+                        {hourlyAvailability.hourSlots.map(hour => (
+                            <div key={hour} style={{
+                                flex: 1,
+                                textAlign: 'center',
+                                fontSize: '11px',
+                                color: hour === getCurrentHour() ? '#ff6b6b' : '#666'
+                            }}>
+                                {getHourDisplay(hour)}
+                            </div>
+                        ))}
+                    </div>
+                    
+                    {/* Hover 툴팁 */}
+                    {hoveredHour !== null && hourlyAvailability.availability[hoveredHour].length > 0 && (
+                        <div style={{
+                            position: 'absolute',
+                            background: 'white',
+                            border: '2px solid #667eea',
+                            borderRadius: '8px',
+                            padding: '10px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            zIndex: 100,
+                            maxHeight: '200px',
+                            overflowY: 'auto'
+                        }}>
+                            <strong>{getHourDisplay(hoveredHour)}:00 참여 가능 ({hourlyAvailability.availability[hoveredHour].length}명)</strong>
+                            <div style={{marginTop: '10px'}}>
+                                {hourlyAvailability.availability[hoveredHour].map((member, idx) => {
+                                    const battles = raidBattles.filter(b => 
+                                        b.season_id === currentSeason.id && b.member_name === member.name
+                                    );
+                                    return (
+                                        <div key={idx} style={{fontSize: '12px', marginTop: '3px'}}>
+                                            • {member.name} {battles.length === 3 && '✅'}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* 실시간 통계 */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(4, 1fr)',
+                        gap: '15px',
+                        marginTop: '20px'
+                    }}>
+                        <div style={{textAlign: 'center'}}>
+                            <div style={{fontSize: '24px', fontWeight: 'bold', color: '#4CAF50'}}>
+                                {memberStats.filter(m => m.scheduleCompliance === '완료').length}
+                            </div>
+                            <div style={{fontSize: '12px', color: '#666'}}>완료</div>
+                        </div>
+                        <div style={{textAlign: 'center'}}>
+                            <div style={{fontSize: '24px', fontWeight: 'bold', color: '#FFC107'}}>
+                                {memberStats.filter(m => m.scheduleCompliance === '진행중').length}
+                            </div>
+                            <div style={{fontSize: '12px', color: '#666'}}>진행중</div>
+                        </div>
+                        <div style={{textAlign: 'center'}}>
+                            <div style={{fontSize: '24px', fontWeight: 'bold', color: '#2196F3'}}>
+                                {memberStats.filter(m => m.scheduleCompliance === '대기중').length}
+                            </div>
+                            <div style={{fontSize: '12px', color: '#666'}}>대기중</div>
+                        </div>
+                        <div style={{textAlign: 'center'}}>
+                            <div style={{fontSize: '24px', fontWeight: 'bold', color: '#f44336'}}>
+                                {memberStats.filter(m => m.scheduleCompliance === '미참여').length}
+                            </div>
+                            <div style={{fontSize: '12px', color: '#666'}}>미참여</div>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* 멤버별 상세 그리드 */}
+                <h3 style={{marginBottom: '15px'}}>멤버별 참여 현황</h3>
+                <div className="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>멤버</th>
+                                <th>참여 가능 시간</th>
+                                <th>상태</th>
+                                <th>첫 기록</th>
+                                <th>마지막 기록</th>
+                                <th>덱 사용</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {memberStats.map(stat => (
+                                <tr key={stat.member.id}>
+                                    <td>{stat.member.name}</td>
+                                    <td style={{fontSize: '12px'}}>{stat.schedule}</td>
+                                    <td>
+                                        <span style={{
+                                            display: 'inline-block',
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '12px',
+                                            fontWeight: '500',
+                                            background: stat.scheduleCompliance === '완료' ? '#d4edda' :
+                                                    stat.scheduleCompliance === '완료(시간외)' ? '#fff3cd' :
+                                                    stat.scheduleCompliance === '진행중' ? '#fff3cd' :
+                                                    stat.scheduleCompliance === '대기중' ? '#cce5ff' : '#f8d7da',
+                                            color: stat.scheduleCompliance === '완료' ? '#155724' :
+                                                stat.scheduleCompliance === '완료(시간외)' ? '#856404' :
+                                                stat.scheduleCompliance === '진행중' ? '#856404' :
+                                                stat.scheduleCompliance === '대기중' ? '#004085' : '#721c24'
+                                        }}>
+                                            {stat.scheduleCompliance}
+                                        </span>
+                                    </td>
+                                    <td>{stat.firstBattle}</td>
+                                    <td>{stat.lastBattle}</td>
+                                    <td>
+                                        <span style={{
+                                            fontWeight: stat.deckUsed === 3 ? 'bold' : 'normal',
+                                            color: stat.deckUsed === 3 ? '#4CAF50' : stat.deckUsed > 0 ? '#FFC107' : '#666'
+                                        }}>
+                                            {stat.deckUsed}/3
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    };
+
     // 설정 컴포넌트
     const Settings = () => {
         return (
@@ -2197,6 +2580,12 @@ export default function Home() {
                         대시보드
                     </button>
                     <button 
+                        className={`nav-tab ${activeTab === 'schedule' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('schedule')}
+                    >
+                        스케줄
+                    </button>
+                    <button 
                         className={`nav-tab ${activeTab === 'mock' ? 'active' : ''}`}
                         onClick={() => setActiveTab('mock')}
                     >
@@ -2232,6 +2621,7 @@ export default function Home() {
                 {!loading && (
                     <>
                         {activeTab === 'dashboard' && <Dashboard />}
+                        {activeTab === 'schedule' && <Schedule />}
                         {activeTab === 'mock' && <MockBattle />}
                         {activeTab === 'raid' && <RaidBattle />}
                         {activeTab === 'settings' && <Settings />}
