@@ -1679,14 +1679,14 @@ export default function Home() {
                                 }}>
                                     <strong style={{fontSize: '14px'}}>{hoveredTimeRange}</strong>
                                     <div style={{marginTop: '10px'}}>
-                                        {hourlyAvailability[hoveredTimeRange].slice(0, 10).map((member, idx) => (
+                                        {hourlyAvailability[hoveredTimeRange].slice(0, 20).map((member, idx) => (
                                             <div key={idx} style={{fontSize: '12px', marginTop: '3px'}}>
                                                 • {member.name} {member.completed && '(완료)'}
                                             </div>
                                         ))}
-                                        {hourlyAvailability[hoveredTimeRange].length > 10 && (
+                                        {hourlyAvailability[hoveredTimeRange].length > 20 && (
                                             <div style={{fontSize: '12px', marginTop: '5px', color: '#666'}}>
-                                                • ... {hourlyAvailability[hoveredTimeRange].length - 10}명 더
+                                                • ... {hourlyAvailability[hoveredTimeRange].length - 20}명 더
                                             </div>
                                         )}
                                     </div>
