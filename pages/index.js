@@ -1343,7 +1343,7 @@ export default function Home() {
             
             // 2열로 나누기
             const firstColumnRanges = hourlyRanges.slice(0, 12); // 05시-16시
-            const secondColumnRanges = hourlyRanges.slice(12, 25); // 17시-05시
+            const secondColumnRanges = hourlyRanges.slice(12, 24); // 17시-04시
             
             return (
                 <div>
