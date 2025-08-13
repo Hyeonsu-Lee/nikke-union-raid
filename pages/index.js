@@ -1541,21 +1541,21 @@ export default function Home() {
                             <span style={{fontSize: '14px', fontWeight: 'bold', marginLeft: '5px'}}>
                                 {activeMembers}명
                             </span>
-                            <div style={{fontSize: '10px', color: '#999'}}>(최근 30분 내 기록)</div>
+                            <div style={{fontSize: '10px', color: '#999'}}>  (최근 30분 내 기록)</div>
                         </div>
                         <div>
                             <span style={{fontSize: '12px', color: '#666'}}>● 대기중:</span>
                             <span style={{fontSize: '14px', fontWeight: 'bold', marginLeft: '5px'}}>
                                 {currentTimeRangeMembers}명
                             </span>
-                            <div style={{fontSize: '10px', color: '#999'}}>(현재 시간대 참여 가능)</div>
+                            <div style={{fontSize: '10px', color: '#999'}}>  (현재 시간대 참여 가능)</div>
                         </div>
                         <div>
                             <span style={{fontSize: '12px', color: '#666'}}>● 완료:</span>
                             <span style={{fontSize: '14px', fontWeight: 'bold', marginLeft: '5px'}}>
                                 {completedCount}명
                             </span>
-                            <div style={{fontSize: '10px', color: '#999'}}>(3덱 모두 사용)</div>
+                            <div style={{fontSize: '10px', color: '#999'}}>  (3덱 모두 사용)</div>
                         </div>
                         <div>
                             <span style={{fontSize: '12px', color: '#666'}}>● 미참여:</span>
