@@ -9,6 +9,7 @@ export default async function handler(req, res) {
             const { seasonId, memberName, level, bossId, deckComposition, damage } = req.body;
             
             try {
+                const koreaTime = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
                 const { error } = await supabase
                     .from('raid_battles')
                     .insert([{
@@ -18,9 +19,9 @@ export default async function handler(req, res) {
                         boss_id: bossId,
                         deck_composition: deckComposition,
                         damage,
-                        timestamp: new Date().toISOString(),  // raid_battles 전용 필드
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
+                        timestamp: koreaTime.toISOString(),  // raid_battles 전용 필드
+                        created_at: koreaTime.toISOString(),
+                        updated_at: koreaTime.toISOString()
                     }]);
                 
                 if (error) throw error;
@@ -34,12 +35,13 @@ export default async function handler(req, res) {
             
         case 'DELETE':
             try {
+                const koreaTime = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
                 // Soft Delete - deleted_at 업데이트
                 const { error } = await supabase
                     .from('raid_battles')
                     .update({ 
-                        deleted_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
+                        deleted_at: koreaTime.toISOString(),
+                        updated_at: koreaTime.toISOString()
                     })
                     .eq('id', req.query.id);
                 
