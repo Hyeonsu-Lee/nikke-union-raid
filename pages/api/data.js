@@ -43,22 +43,26 @@ export default async function handler(req, res) {
                 // seasonId로만 조회 (JOIN 없음!)
                 supabase.from('bosses')
                     .select('*')
-                    .eq('season_id', seasonId),
+                    .eq('season_id', seasonId)
+                    .order('id', { ascending: true }),
                 
                 supabase.from('members')
                     .select('*')
                     .eq('season_id', seasonId)
-                    .is('deleted_at', null),
+                    .is('deleted_at', null)
+                    .order('id', { ascending: true }),
                 
                 supabase.from('member_schedules')
                     .select('*')
                     .eq('season_id', seasonId)
-                    .is('deleted_at', null),
+                    .is('deleted_at', null)
+                    .order('id', { ascending: true }),
                 
                 supabase.from('mock_battles')
                     .select('*')
                     .eq('season_id', seasonId)
-                    .is('deleted_at', null),
+                    .is('deleted_at', null)
+                    .order('id', { ascending: false }),
                 
                 supabase.from('raid_battles')
                     .select('*')
@@ -100,56 +104,65 @@ export default async function handler(req, res) {
                 supabase.from('bosses')
                     .select('*')
                     .eq('season_id', seasonId)
-                    .gt('updated_at', lastSync),
+                    .gt('updated_at', lastSync)
+                    .order('id', { ascending: true }),
                 
                 supabase.from('members')
                     .select('*')
                     .eq('season_id', seasonId)
                     .gt('updated_at', lastSync)
-                    .is('deleted_at', null),
+                    .is('deleted_at', null)
+                    .order('id', { ascending: true }),
                 
                 supabase.from('member_schedules')
                     .select('*')
                     .eq('season_id', seasonId)
                     .gt('updated_at', lastSync)
-                    .is('deleted_at', null),
+                    .is('deleted_at', null)
+                    .order('id', { ascending: true }),
                 
                 supabase.from('mock_battles')
                     .select('*')
                     .eq('season_id', seasonId)
                     .gt('updated_at', lastSync)
-                    .is('deleted_at', null),
+                    .is('deleted_at', null)
+                    .order('id', { ascending: false }),
                 
                 supabase.from('raid_battles')
                     .select('*')
                     .eq('season_id', seasonId)
                     .gt('updated_at', lastSync)
-                    .is('deleted_at', null),
-                
+                    .is('deleted_at', null)
+                    .order('id', { ascending: false }),
+
                 // deleted 조회
                 supabase.from('members')
                     .select('id')
                     .eq('season_id', seasonId)
                     .not('deleted_at', 'is', null)
-                    .gt('deleted_at', lastSync),
+                    .gt('deleted_at', lastSync)
+                    .order('id', { ascending: true }),
                 
                 supabase.from('member_schedules')
                     .select('id')
                     .eq('season_id', seasonId)
                     .not('deleted_at', 'is', null)
-                    .gt('deleted_at', lastSync),
+                    .gt('deleted_at', lastSync)
+                    .order('id', { ascending: true }),
                 
                 supabase.from('mock_battles')
                     .select('id')
                     .eq('season_id', seasonId)
                     .not('deleted_at', 'is', null)
-                    .gt('deleted_at', lastSync),
+                    .gt('deleted_at', lastSync)
+                    .order('id', { ascending: true }),
                 
                 supabase.from('raid_battles')
                     .select('id')
                     .eq('season_id', seasonId)
                     .not('deleted_at', 'is', null)
                     .gt('deleted_at', lastSync)
+                    .order('id', { ascending: true })
             ]);
             
             return res.status(200).json({
