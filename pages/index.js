@@ -7,6 +7,12 @@ import React, { useState, useEffect, useMemo, useRef } from 'react'; // useRef �
 const ATTRIBUTES = ['풍압', '철갑', '수냉', '작열', '전격'];
 
 export default function Home() {
+    // 로그인 상태 추가
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [unionInfo, setUnionInfo] = useState(null);
+    const [loginForm, setLoginForm] = useState({ unionName: '', password: '' });
+    const [loginError, setLoginError] = useState('');
+
     const [activeTab, setActiveTab] = useState('dashboard');
     const [activeSettingTab, setActiveSettingTab] = useState('season');
     const [currentSeason, setCurrentSeason] = useState(null);
@@ -22,16 +28,78 @@ export default function Home() {
     const [memberSchedules, setMemberSchedules] = useState([]);
     
     // 초기 데이터 로드
+    // 로그인 체크
     useEffect(() => {
-        loadData().finally(() => {
-            setLoading(false);
-        });
-        
+        const savedAuth = localStorage.getItem('unionAuth');
+        if (savedAuth) {
+            const auth = JSON.parse(savedAuth);
+            setUnionInfo(auth);
+            setIsLoggedIn(true);
+            // unionId를 가지고 데이터 로드
+            loadData(auth.unionId).finally(() => {
+                setLoading(false);
+            });
+        } else {
+            setLoading(false);  // 로그인 안 된 경우도 로딩 종료
+        }
     }, []);
+
+    // 로그인 처리
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setLoginError('');
+        
+        try {
+            const res = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(loginForm)
+            });
+            
+            const data = await res.json();
+            
+            if (res.ok && data.success) {
+                const authInfo = {
+                    unionId: data.unionId,
+                    unionName: data.unionName,
+                    isAdmin: data.isAdmin
+                };
+                
+                localStorage.setItem('unionAuth', JSON.stringify(authInfo));
+                setUnionInfo(authInfo);
+                setIsLoggedIn(true);
+                setLoading(true);
+                
+                // 로그인 성공 후 데이터 로드
+                loadData(data.unionId).finally(() => {
+                    setLoading(false);
+                });
+            } else {
+                setLoginError(data.error || '로그인 실패');
+            }
+        } catch (error) {
+            setLoginError('로그인 처리 중 오류가 발생했습니다.');
+        }
+    };
+    
+    // 로그아웃
+    const handleLogout = () => {
+        localStorage.removeItem('unionAuth');
+        setIsLoggedIn(false);
+        setUnionInfo(null);
+        // 데이터 초기화
+        setSeasons([]);
+        setBosses([]);
+        setMembers([]);
+        setMemberSchedules([]);
+        setMockBattles([]);
+        setRaidBattles([]);
+        setCurrentSeason(null);
+    };
 
     // loadData 래퍼 함수
     const handleRefresh = async () => {
-        if (isRefreshing) return;  // 이미 갱신 중이면 무시
+        if (isRefreshing || !unionInfo?.unionId) return;  // 이미 갱신 중이면 무시
         
         setIsRefreshing(true);
         await loadData();
@@ -50,8 +118,14 @@ export default function Home() {
         }
     };
     const loadData = async () => {
+        // unionId가 없으면 unionInfo에서 가져오기
+        const currentUnionId = unionId || unionInfo?.unionId;
+        if (!currentUnionId) return;
+
         try {
-            const url = lastSync ? `/api/data?lastSync=${lastSync}` : '/api/data';
+            const url = lastSync 
+                ? `/api/data?lastSync=${lastSync}&unionId=${currentUnionId}`
+                : `/api/data?unionId=${currentUnionId}`;
             const res = await fetch(url);
             const data = await res.json();
             
@@ -195,10 +269,17 @@ export default function Home() {
     
     const saveData = async (endpoint, data, method = 'POST') => {
         try {
-            const res = await fetch(`/api/${endpoint}`, {
+            const url = endpoint === 'member-schedules' 
+                ? `/api/${endpoint}` 
+                : `/api/${endpoint}?unionId=${unionInfo.unionId}`;
+
+            const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify({
+                    ...data,
+                    unionId: unionInfo.unionId // body에도 포함
+                })
             });
             
             if (res.ok) {
@@ -2360,7 +2441,106 @@ export default function Home() {
             </div>
         );
     };
-
+    // 메인 렌더링 - 로그인 체크 추가
+    if (!isLoggedIn) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '20px'
+            }}>
+                <div style={{
+                    background: 'white',
+                    padding: '40px',
+                    borderRadius: '15px',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                    width: '100%',
+                    maxWidth: '400px'
+                }}>
+                    <h2 style={{textAlign: 'center', marginBottom: '30px'}}>
+                        니케 유니온 레이드 관제 시스템
+                    </h2>
+                    <form onSubmit={handleLogin}>
+                        <div style={{marginBottom: '20px'}}>
+                            <label style={{display: 'block', marginBottom: '5px', color: '#555'}}>
+                                유니온명
+                            </label>
+                            <input
+                                type="text"
+                                value={loginForm.unionName}
+                                onChange={(e) => setLoginForm({...loginForm, unionName: e.target.value})}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    border: '2px solid #e0e0e0',
+                                    borderRadius: '8px',
+                                    fontSize: '14px'
+                                }}
+                                required
+                            />
+                        </div>
+                        <div style={{marginBottom: '20px'}}>
+                            <label style={{display: 'block', marginBottom: '5px', color: '#555'}}>
+                                비밀번호
+                            </label>
+                            <input
+                                type="password"
+                                value={loginForm.password}
+                                onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    border: '2px solid #e0e0e0',
+                                    borderRadius: '8px',
+                                    fontSize: '14px'
+                                }}
+                                required
+                            />
+                        </div>
+                        {loginError && (
+                            <div style={{
+                                marginBottom: '20px',
+                                padding: '10px',
+                                background: '#ffe0e0',
+                                color: '#d00',
+                                borderRadius: '8px',
+                                fontSize: '14px'
+                            }}>
+                                {loginError}
+                            </div>
+                        )}
+                        <button
+                            type="submit"
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '16px',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s'
+                            }}
+                        >
+                            로그인
+                        </button>
+                    </form>
+                    <div style={{
+                        marginTop: '20px',
+                        textAlign: 'center',
+                        fontSize: '12px',
+                        color: '#999'
+                    }}>
+                        관리자에게 유니온명과 비밀번호를 문의하세요
+                    </div>
+                </div>
+            </div>
+        );
+    }
 // 메인 렌더링
     return (
         <div className="app-container">
@@ -2748,18 +2928,26 @@ export default function Home() {
             
             <div className="header">
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
-                    <h1>니케 유니온 레이드 관제 시스템</h1>
-                    <button 
-                        className="btn btn-secondary"
-                        onClick={handleRefresh}
-                        disabled={isRefreshing}
-                        style={{
-                            opacity: isRefreshing ? 0.5 : 1,
-                            cursor: isRefreshing ? 'not-allowed' : 'pointer'
-                        }}
-                    >
-                        {isRefreshing ? '⏳ 갱신중...' : '🔄 갱신'}
-                    </button>
+                    <h1>니케 유니온 레이드 관제 시스템 - {unionInfo?.unionName}</h1>
+                    <div style={{display: 'flex', gap: '10px'}}>
+                        <button 
+                            className="btn btn-secondary"
+                            onClick={handleRefresh}
+                            disabled={isRefreshing}
+                            style={{
+                                opacity: isRefreshing ? 0.5 : 1,
+                                cursor: isRefreshing ? 'not-allowed' : 'pointer'
+                            }}
+                        >
+                            {isRefreshing ? '⏳ 갱신중...' : '🔄 갱신'}
+                        </button>
+                        <button 
+                            className="btn btn-danger"
+                            onClick={handleLogout}
+                        >
+                            로그아웃
+                        </button>
+                    </div>
                 </div>
                 <div className="nav-tabs">
                     <button 
