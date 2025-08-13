@@ -1854,6 +1854,7 @@ export default function Home() {
 
     // 시즌 설정 - Uncontrolled로 변경!
     const SeasonSettings = () => {
+        console.log('SeasonSettings 렌더링, seasons 개수:', seasons.length);
         // useRef로 변경
         const nameRef = useRef();
         const dateRef = useRef();

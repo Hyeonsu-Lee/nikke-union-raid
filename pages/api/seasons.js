@@ -7,7 +7,8 @@ export default async function handler(req, res) {
     switch (method) {
         case 'POST': {
             const { name, date, copyFromSeason, unionId } = req.body;
-
+            console.log('Received:', { name, date, copyFromSeason, unionId });
+            console.log('unionId type:', typeof unionId);
             if (!unionId) {
                 return res.status(400).json({ error: 'Union ID is required' });
             }
@@ -17,7 +18,7 @@ export default async function handler(req, res) {
                 const { data: newSeason, error: seasonError } = await supabase
                     .from('seasons')
                     .insert([{ 
-                        union_id: parseInt(unionId),
+                        union_id: unionId,
                         name, 
                         date, 
                         is_active: false 
