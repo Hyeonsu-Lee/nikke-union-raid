@@ -1129,6 +1129,7 @@ export default function Home() {
     
     // 스케줄 컴포넌트
     // 스케줄 컴포넌트 (완전 재작성)
+    // 스케줄 컴포넌트 (검수 및 수정 완료)
     const Schedule = () => {
         const [hoveredTimeRange, setHoveredTimeRange] = useState(null);
         const [currentTime, setCurrentTime] = useState(new Date());
@@ -1290,9 +1291,6 @@ export default function Home() {
                         
                         if (isInSchedule) {
                             timeCompliance = '✅';
-                            if (memberBattles.length === 3 && status === '🟢') {
-                                status = '🟢'; // 시간 내 완료
-                            }
                         } else {
                             timeCompliance = '⚠️';
                             if (memberBattles.length === 3) {
@@ -1321,12 +1319,6 @@ export default function Home() {
                     }
                 }
                 
-                // 완료 멤버 수 계산
-                const completedCount = memberStats?.filter(m => m.status === '🟢' || m.status === '🟡').length || 0;
-                const waitingCount = memberStats?.filter(m => m.status === '🔵').length || 0;
-                const inProgressCount = memberStats?.filter(m => m.status === '🟠').length || 0;
-                const notParticipatedCount = memberStats?.filter(m => m.status === '🔴').length || 0;
-                
                 return {
                     name: member.name,
                     schedule: schedule?.time_slots || '미설정',
@@ -1341,8 +1333,6 @@ export default function Home() {
         
         // 통계 계산
         const completedCount = memberStats.filter(m => m.status === '🟢' || m.status === '🟡').length;
-        const inProgressCount = memberStats.filter(m => m.status === '🟠').length;
-        const waitingCount = memberStats.filter(m => m.status === '🔵').length;
         const notParticipatedCount = memberStats.filter(m => m.status === '🔴').length;
         
         if (!currentSeason) {
@@ -1389,32 +1379,34 @@ export default function Home() {
                         </div>
                         
                         {/* 현재 시간 표시 */}
-                        <div style={{
-                            position: 'absolute',
-                            left: `${((getCurrentHour() - 5) / 24) * 100}%`,
-                            top: '20px',
-                            transform: 'translateX(-50%)',
-                            zIndex: 10
-                        }}>
-                            <div style={{fontSize: '14px', marginBottom: '3px'}}>▼</div>
+                        {getCurrentHour() >= 5 && getCurrentHour() <= 29 && (
                             <div style={{
-                                width: '2px',
-                                height: '15px',
-                                background: '#ff6b6b',
-                                margin: '0 auto'
-                            }} />
-                            <div style={{
-                                background: '#ff6b6b',
-                                color: 'white',
-                                padding: '3px 10px',
-                                borderRadius: '12px',
-                                fontSize: '11px',
-                                whiteSpace: 'nowrap',
-                                marginTop: '5px'
+                                position: 'absolute',
+                                left: `${((getCurrentHour() - 5) / 24) * 100}%`,
+                                top: '20px',
+                                transform: 'translateX(-50%)',
+                                zIndex: 10
                             }}>
-                                현재 시간 ({currentTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})
+                                <div style={{fontSize: '14px', marginBottom: '3px'}}>▼</div>
+                                <div style={{
+                                    width: '2px',
+                                    height: '15px',
+                                    background: '#ff6b6b',
+                                    margin: '0 auto'
+                                }} />
+                                <div style={{
+                                    background: '#ff6b6b',
+                                    color: 'white',
+                                    padding: '3px 10px',
+                                    borderRadius: '12px',
+                                    fontSize: '11px',
+                                    whiteSpace: 'nowrap',
+                                    marginTop: '5px'
+                                }}>
+                                    현재 시간 ({currentTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                     
                     {/* 참여 가능 인원 분포 */}
@@ -1459,9 +1451,14 @@ export default function Home() {
                                             background: isCurrentRange ? '#667eea' : '#90cdf4',
                                             borderRadius: '3px',
                                             transition: 'all 0.3s',
-                                            cursor: 'pointer'
+                                            cursor: 'pointer',
+                                            lineHeight: '25px',
+                                            paddingLeft: '5px',
+                                            color: 'rgba(255,255,255,0.8)',
+                                            fontSize: '14px',
+                                            overflow: 'hidden'
                                         }}>
-                                            {'█'.repeat(Math.ceil(members.length / 2))}
+                                            {'█'.repeat(Math.max(Math.ceil(members.length / 2), 1))}
                                         </div>
                                     </div>
                                     
@@ -1487,7 +1484,7 @@ export default function Home() {
                         })}
                         
                         {/* Hover 툴팁 */}
-                        {hoveredTimeRange && timeRangeAvailability[hoveredTimeRange].length > 0 && (
+                        {hoveredTimeRange && timeRangeAvailability[hoveredTimeRange]?.length > 0 && (
                             <div style={{
                                 position: 'absolute',
                                 right: '20px',
