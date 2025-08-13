@@ -1840,7 +1840,8 @@ export default function Home() {
             await saveData('seasons', {
                 name: seasonName,
                 date: seasonDate,
-                copyFromSeason: copyFromSeasonId
+                copyFromSeason: copyFromSeasonId,
+                unionId: unionInfo.unionId
             });
         };
         
