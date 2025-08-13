@@ -278,14 +278,22 @@ export default function Home() {
             });
             
             if (res.ok) {
-                await Promise.all([
-                    endpoint === 'seasons' 
-                        ? loadData(unionInfo?.unionId)  // 시즌이면 전체 조회 (시즌 목록 포함)
-                        : currentSeason 
+                if (endpoint === 'seasons') {
+                    const tempSeason = currentSeason;
+                    setCurrentSeason(null);
+                    await Promise.all([
+                        loadData(),  // currentSeason이 null이므로 시즌 목록 재조회
+                        showMessage('데이터가 저장되었습니다.', 'success')
+                    ]);
+                    // loadData 내부에서 활성 시즌 자동 복원됨
+                } else {
+                    await Promise.all([
+                        currentSeason 
                             ? loadSeasonData(currentSeason.id) 
                             : Promise.resolve(),
-                    showMessage('데이터가 저장되었습니다.', 'success')
-                ]);
+                        showMessage('데이터가 저장되었습니다.', 'success')
+                    ]);
+                }
             }
         } catch (error) {
             showMessage('저장 실패: ' + error.message, 'error');
@@ -306,23 +314,32 @@ export default function Home() {
             const res = await fetch(`/api/${endpoint}?id=${id}`, options);
             
             if (res.ok) {
-                if (endpoint === 'seasons' && currentSeason && currentSeason.id === parseInt(id)) {
+                if (endpoint === 'seasons') {
+                    // 삭제한 시즌이 현재 시즌이면 초기화
+                    if (currentSeason && currentSeason.id === parseInt(id)) {
+                        setBosses([]);
+                        setMembers([]);
+                        setMemberSchedules([]);
+                        setMockBattles([]);
+                        setRaidBattles([]);
+                        setLastSync(null);
+                    }
+                    
+                    // 시즌 목록 재조회를 위해 currentSeason을 임시로 null
+                    const tempSeason = currentSeason;
                     setCurrentSeason(null);
-                    setBosses([]);
-                    setMembers([]);
-                    setMemberSchedules([]);
-                    setMockBattles([]);
-                    setRaidBattles([]);
-                    setLastSync(null);  // 추가!
-                }
-                await Promise.all([
-                    endpoint === 'seasons'
-                        ? loadData(unionInfo?.unionId)  // 시즌이면 전체 조회 (시즌 목록 포함)
-                        : currentSeason 
+                    await Promise.all([
+                        loadData(),
+                        showMessage('삭제되었습니다.', 'success')
+                    ]);
+                } else {
+                    await Promise.all([
+                        currentSeason 
                             ? loadSeasonData(currentSeason.id) 
                             : Promise.resolve(),
-                    showMessage('삭제되었습니다.', 'success')
-                ]);
+                        showMessage('삭제되었습니다.', 'success')
+                    ]);
+                }
             }
         } catch (error) {
             showMessage('삭제 실패: ' + error.message, 'error');
