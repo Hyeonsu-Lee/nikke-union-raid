@@ -1504,6 +1504,11 @@ export default function Home() {
         const memberNameRef = useRef();
         const [editingSchedule, setEditingSchedule] = useState(null);
         const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
+
+        const hourSlots = [
+            5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,  // 당일
+            24,25,26,27,28,29  // 다음날 0시(24시)~5시(29시)
+        ];
         
         // currentSeason.id를 명시적 의존성으로 사용
         const seasonMembers = useMemo(() => {
@@ -1568,10 +1573,8 @@ export default function Home() {
             
             for (let i = 1; i <= slots.length; i++) {
                 if (i === slots.length || slots[i] !== end + 1) {
-                    const startHour = start < 5 ? start + 24 : start;
-                    const endHour = (end + 1) < 5 ? (end + 1) + 24 : (end + 1);
-                    const startStr = `${String(startHour % 24).padStart(2, '0')}:00`;
-                    const endStr = `${String(endHour % 24).padStart(2, '0')}:00`;
+                    const startStr = `${String(start).padStart(2, '0')}:00`;
+                    const endStr = `${String(end + 1).padStart(2, '0')}:00`;
                     ranges.push(`${startStr}-${endStr}`);
                     
                     if (i < slots.length) {
@@ -1596,15 +1599,11 @@ export default function Home() {
             ranges.forEach(range => {
                 const [startStr, endStr] = range.split('-');
                 if (startStr && endStr) {
-                    let startHour = parseInt(startStr.split(':')[0]);
-                    let endHour = parseInt(endStr.split(':')[0]);
-                    
-                    // 5시 기준으로 변환
-                    startHour = startHour < 5 ? startHour : startHour;
-                    endHour = endHour <= 5 ? endHour : endHour;
+                    const startHour = parseInt(startStr.split(':')[0]);
+                    const endHour = parseInt(endStr.split(':')[0]);
                     
                     for (let h = startHour; h < endHour; h++) {
-                        slots.push(h % 24);
+                        slots.push(h);
                     }
                 }
             });
@@ -1635,8 +1634,8 @@ export default function Home() {
         
         // 시간 표시 헬퍼 (5시~28시로 표시)
         const getHourDisplay = (hour) => {
-            if (hour < 5) {
-                return `${hour + 24}시`;
+            if (hour >= 24) {
+                return `익일 ${hour - 24}시`;  // 24→익일 0시, 25→익일 1시
             }
             return `${hour}시`;
         };
@@ -1741,7 +1740,7 @@ export default function Home() {
                                         gap: '10px',
                                         marginBottom: '20px'
                                     }}>
-                                        {[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4].map(hour => (
+                                        {hourSlots.map(hour => (
                                             <button
                                                 key={hour}
                                                 onClick={() => toggleTimeSlot(hour)}
