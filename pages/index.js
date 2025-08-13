@@ -279,7 +279,11 @@ export default function Home() {
             
             if (res.ok) {
                 await Promise.all([
-                    currentSeason ? loadSeasonData(currentSeason.id) : Promise.resolve(),
+                    endpoint === 'seasons' 
+                        ? loadData()  // 시즌이면 전체 조회 (시즌 목록 포함)
+                        : currentSeason 
+                            ? loadSeasonData(currentSeason.id) 
+                            : Promise.resolve(),
                     showMessage('데이터가 저장되었습니다.', 'success')
                 ]);
             }
@@ -302,8 +306,21 @@ export default function Home() {
             const res = await fetch(`/api/${endpoint}?id=${id}`, options);
             
             if (res.ok) {
+                if (endpoint === 'seasons' && currentSeason && currentSeason.id === parseInt(id)) {
+                    setCurrentSeason(null);
+                    setBosses([]);
+                    setMembers([]);
+                    setMemberSchedules([]);
+                    setMockBattles([]);
+                    setRaidBattles([]);
+                    setLastSync(null);  // 추가!
+                }
                 await Promise.all([
-                    currentSeason ? loadSeasonData(currentSeason.id) : Promise.resolve(),
+                    endpoint === 'seasons'
+                        ? loadData()  // 시즌이면 전체 조회 (시즌 목록 포함)
+                        : currentSeason 
+                            ? loadSeasonData(currentSeason.id) 
+                            : Promise.resolve(),
                     showMessage('삭제되었습니다.', 'success')
                 ]);
             }

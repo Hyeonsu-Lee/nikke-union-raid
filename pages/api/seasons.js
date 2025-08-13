@@ -7,8 +7,7 @@ export default async function handler(req, res) {
     switch (method) {
         case 'POST': {
             const { name, date, copyFromSeason, unionId } = req.body;
-            console.log('Received:', { name, date, copyFromSeason, unionId });
-            console.log('unionId type:', typeof unionId);
+
             if (!unionId) {
                 return res.status(400).json({ error: 'Union ID is required' });
             }
@@ -26,7 +25,7 @@ export default async function handler(req, res) {
                     .select()
                     .single();
 
-                if (seasonError) {
+                if (seasonError){
                     console.error('Season insert error:', seasonError);
                     throw seasonError;
                 }
