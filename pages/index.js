@@ -19,6 +19,7 @@ export default function Home() {
     const [messages, setMessages] = useState([]);
     const [lastSync, setLastSync] = useState(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [memberSchedules, setMemberSchedules] = useState([]);
     
     // 초기 데이터 로드
     useEffect(() => {
@@ -100,6 +101,24 @@ export default function Home() {
                     });
                 }
                 
+                if (data.changes.memberSchedules) {
+                    setMemberSchedules(prev => {
+                        let updated = [...prev];
+                        data.changes.memberSchedules.updated?.forEach(newItem => {
+                            const index = updated.findIndex(item => item.id === newItem.id);
+                            if (index >= 0) {
+                                updated[index] = newItem;
+                            } else {
+                                updated.push(newItem);
+                            }
+                        });
+                        if (data.changes.memberSchedules.deleted?.length > 0) {
+                            updated = updated.filter(m => !data.changes.memberSchedules.deleted.includes(m.id));
+                        }
+                        return updated;
+                    });
+                }
+
                 if (data.changes.bosses?.updated?.length > 0) {
                     setBosses(prev => {
                         const updated = [...prev];
@@ -157,6 +176,7 @@ export default function Home() {
                 setMembers(data.members || []);
                 setMockBattles(data.mockBattles || []);
                 setRaidBattles(data.raidBattles || []);
+                setMemberSchedules(data.memberSchedules || []);
                 
                 // 첫 로드 시 활성 시즌 설정
                 const activeSeason = (data.seasons || []).find(s => s.is_active);
@@ -1482,12 +1502,25 @@ export default function Home() {
     // 멤버 설정 컴포넌트 완성본
     const MemberSettings = () => {
         const memberNameRef = useRef();
+        const [editingSchedule, setEditingSchedule] = useState(null);
+        const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
         
         // currentSeason.id를 명시적 의존성으로 사용
         const seasonMembers = useMemo(() => {
             if (!currentSeason?.id) return [];
             return members.filter(m => m.season_id === currentSeason.id);
         }, [members, currentSeason?.id]);
+        
+        // 멤버별 스케줄 정보 매핑
+        const memberSchedulesMap = useMemo(() => {
+            const map = {};
+            memberSchedules.forEach(schedule => {
+                if (schedule.season_id === currentSeason?.id) {
+                    map[schedule.member_id] = schedule;
+                }
+            });
+            return map;
+        }, [memberSchedules, currentSeason?.id]);
         
         const handleSubmit = async (e) => {
             e.preventDefault();
@@ -1504,6 +1537,7 @@ export default function Home() {
                 showMessage('이미 존재하는 멤버입니다.', 'error');
                 return;
             }
+            
             // 입력 필드 초기화
             memberNameRef.current.value = '';
 
@@ -1511,7 +1545,100 @@ export default function Home() {
                 seasonId: currentSeason.id,
                 name: memberName
             });
+        };
+        
+        // 시간 슬롯 토글 (5시부터 다음날 4시까지, 1시간 단위)
+        const toggleTimeSlot = (hour) => {
+            setSelectedTimeSlots(prev => {
+                if (prev.includes(hour)) {
+                    return prev.filter(h => h !== hour);
+                } else {
+                    return [...prev, hour].sort((a, b) => a - b);
+                }
+            });
+        };
+        
+        // 시간 슬롯을 문자열로 변환 (연속된 시간을 범위로 표현)
+        const timeSlotsToString = (slots) => {
+            if (!slots || slots.length === 0) return '';
             
+            const ranges = [];
+            let start = slots[0];
+            let end = slots[0];
+            
+            for (let i = 1; i <= slots.length; i++) {
+                if (i === slots.length || slots[i] !== end + 1) {
+                    const startHour = start < 5 ? start + 24 : start;
+                    const endHour = (end + 1) < 5 ? (end + 1) + 24 : (end + 1);
+                    const startStr = `${String(startHour % 24).padStart(2, '0')}:00`;
+                    const endStr = `${String(endHour % 24).padStart(2, '0')}:00`;
+                    ranges.push(`${startStr}-${endStr}`);
+                    
+                    if (i < slots.length) {
+                        start = slots[i];
+                        end = slots[i];
+                    }
+                } else {
+                    end = slots[i];
+                }
+            }
+            
+            return ranges.join(',');
+        };
+        
+        // 문자열을 시간 슬롯으로 변환
+        const stringToTimeSlots = (str) => {
+            if (!str) return [];
+            
+            const slots = [];
+            const ranges = str.split(',');
+            
+            ranges.forEach(range => {
+                const [startStr, endStr] = range.split('-');
+                if (startStr && endStr) {
+                    let startHour = parseInt(startStr.split(':')[0]);
+                    let endHour = parseInt(endStr.split(':')[0]);
+                    
+                    // 5시 기준으로 변환
+                    startHour = startHour < 5 ? startHour : startHour;
+                    endHour = endHour <= 5 ? endHour : endHour;
+                    
+                    for (let h = startHour; h < endHour; h++) {
+                        slots.push(h % 24);
+                    }
+                }
+            });
+            
+            return slots;
+        };
+        
+        const openScheduleModal = (member) => {
+            setEditingSchedule(member);
+            const schedule = memberSchedulesMap[member.id];
+            setSelectedTimeSlots(schedule ? stringToTimeSlots(schedule.time_slots) : []);
+        };
+        
+        const saveSchedule = async () => {
+            if (!editingSchedule) return;
+            
+            const timeSlotString = timeSlotsToString(selectedTimeSlots);
+            
+            await saveData('member-schedules', {
+                memberId: editingSchedule.id,
+                seasonId: currentSeason.id,
+                timeSlots: timeSlotString
+            }, 'PUT');
+            
+            setEditingSchedule(null);
+            setSelectedTimeSlots([]);
+        };
+        
+        // 시간 표시 헬퍼 (5시~28시로 표시)
+        const getHourDisplay = (hour) => {
+            if (hour < 5) {
+                return `${hour + 24}시`;
+            }
+            return `${hour}시`;
         };
         
         return (
@@ -1547,31 +1674,122 @@ export default function Home() {
                                 <thead>
                                     <tr>
                                         <th>멤버 이름</th>
+                                        <th>참여 가능 시간</th>
                                         <th>액션</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {seasonMembers.map(member => (
-                                        <tr key={member.id}>
-                                            <td>{member.name}</td>
-                                            <td>
-                                                <button
-                                                    className="btn btn-danger"
-                                                    onClick={() => deleteData('members', member.id)}
-                                                >
-                                                    삭제
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {seasonMembers.map(member => {
+                                        const schedule = memberSchedulesMap[member.id];
+                                        return (
+                                            <tr key={member.id}>
+                                                <td>{member.name}</td>
+                                                <td>{schedule?.time_slots || '미설정'}</td>
+                                                <td>
+                                                    <button
+                                                        className="btn btn-primary"
+                                                        onClick={() => openScheduleModal(member)}
+                                                        style={{marginRight: '5px'}}
+                                                    >
+                                                        {schedule ? '시간 수정' : '시간 설정'}
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-danger"
+                                                        onClick={() => deleteData('members', member.id)}
+                                                    >
+                                                        삭제
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
+                        
+                        {/* 스케줄 설정 모달 */}
+                        {editingSchedule && (
+                            <div style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'rgba(0,0,0,0.5)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 1000
+                            }}>
+                                <div style={{
+                                    background: 'white',
+                                    borderRadius: '15px',
+                                    padding: '30px',
+                                    maxWidth: '800px',
+                                    width: '90%',
+                                    maxHeight: '80vh',
+                                    overflow: 'auto'
+                                }}>
+                                    <h3>{editingSchedule.name} - 참여 가능 시간 설정</h3>
+                                    <p style={{color: '#666', marginBottom: '20px'}}>
+                                        참여 가능한 시간을 클릭하여 선택하세요 (1시간 단위)
+                                    </p>
+                                    
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(6, 1fr)',
+                                        gap: '10px',
+                                        marginBottom: '20px'
+                                    }}>
+                                        {[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4].map(hour => (
+                                            <button
+                                                key={hour}
+                                                onClick={() => toggleTimeSlot(hour)}
+                                                style={{
+                                                    padding: '10px',
+                                                    border: '2px solid #e0e0e0',
+                                                    borderRadius: '8px',
+                                                    background: selectedTimeSlots.includes(hour) ? '#667eea' : 'white',
+                                                    color: selectedTimeSlots.includes(hour) ? 'white' : 'black',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.3s'
+                                                }}
+                                            >
+                                                {getHourDisplay(hour)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    
+                                    <div style={{marginBottom: '20px'}}>
+                                        <strong>선택된 시간:</strong> {timeSlotsToString(selectedTimeSlots) || '없음'}
+                                    </div>
+                                    
+                                    <div style={{display: 'flex', gap: '10px', justifyContent: 'flex-end'}}>
+                                        <button 
+                                            className="btn btn-secondary"
+                                            onClick={() => {
+                                                setEditingSchedule(null);
+                                                setSelectedTimeSlots([]);
+                                            }}
+                                        >
+                                            취소
+                                        </button>
+                                        <button 
+                                            className="btn btn-primary"
+                                            onClick={saveSchedule}
+                                        >
+                                            저장
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </>
                 )}
             </div>
         );
     };
+
 // 메인 렌더링
     return (
         <div className="app-container">
