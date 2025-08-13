@@ -37,6 +37,8 @@ export default function Home() {
             setIsLoggedIn(true);
             // unionId를 가지고 데이터 로드
             loadData(auth.unionId).finally(() => {
+                console.log('loadData 완료');
+                console.log('seasons:', seasons);  // 확인
                 setLoading(false);
             });
         } else {
