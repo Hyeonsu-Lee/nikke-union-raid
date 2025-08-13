@@ -3004,33 +3004,18 @@ export default function Home() {
                             disabled={isRefreshing}
                             style={{
                                 position: 'relative',
+                                overflow: 'hidden',
                                 opacity: isRefreshing ? 0.8 : 1,
-                                cursor: isRefreshing ? 'not-allowed' : 'pointer'
+                                cursor: isRefreshing ? 'not-allowed' : 'pointer',
+                                background: isRefreshing 
+                                    ? `linear-gradient(90deg, 
+                                        #667eea ${cooldownProgress}%, 
+                                        #f0f0f0 ${cooldownProgress}%)`
+                                    : '#f0f0f0',
+                                transition: 'background 0.1s linear'
                             }}
                         >
-                            {isRefreshing && (
-                                <svg style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: '100%',
-                                    transform: 'rotate(-90deg)'
-                                }}>
-                                    <rect
-                                        x="0"
-                                        y="0"
-                                        width="100%"
-                                        height="100%"
-                                        fill="none"
-                                        stroke="#667eea"
-                                        strokeWidth="2"
-                                        strokeDasharray={`${cooldownProgress * 4} 400`}
-                                        opacity="0.3"
-                                    />
-                                </svg>
-                            )}
-                            <span>{isRefreshing ? '⏳ 대기중...' : '🔄 갱신'}</span>
+                            {isRefreshing ? '⏳ 대기중...' : '🔄 갱신'}
                         </button>
                         <button 
                             className="btn btn-danger"
