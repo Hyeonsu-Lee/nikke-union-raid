@@ -1131,503 +1131,573 @@ export default function Home() {
     // 스케줄 컴포넌트 (완전 재작성)
     // 스케줄 컴포넌트 (검수 및 수정 완료)
     const Schedule = () => {
-        const [hoveredTimeRange, setHoveredTimeRange] = useState(null);
-        const [currentTime, setCurrentTime] = useState(new Date());
-        
-        // 1분마다 현재 시간 업데이트
-        useEffect(() => {
-            const timer = setInterval(() => {
-                setCurrentTime(new Date());
-            }, 60000);
-            return () => clearInterval(timer);
-        }, []);
-        
-        // 현재 시간을 5-29 형식으로 변환
-        const getCurrentHour = () => {
-            const hour = currentTime.getHours();
-            return hour < 5 ? hour + 24 : hour;
-        };
-        
-        // 현재 시간이 어느 구간인지 확인
-        const getCurrentTimeRange = () => {
-            const hour = getCurrentHour();
-            if (hour >= 5 && hour < 9) return '05-09시';
-            if (hour >= 9 && hour < 13) return '09-13시';
-            if (hour >= 13 && hour < 17) return '13-17시';
-            if (hour >= 17 && hour < 21) return '17-21시';
-            if (hour >= 21 && hour < 25) return '21-01시';
-            if (hour >= 25 && hour < 29) return '01-05시';
-            return '';
-        };
-        
-        // 멤버별 스케줄 정보 매핑
-        const seasonMembers = useMemo(() => {
-            if (!currentSeason?.id) return [];
-            return members.filter(m => m.season_id === currentSeason.id);
-        }, [members, currentSeason?.id]);
-        
-        const memberSchedulesMap = useMemo(() => {
-            const map = {};
-            memberSchedules.forEach(schedule => {
-                if (schedule.season_id === currentSeason?.id) {
-                    map[schedule.member_id] = schedule;
-                }
-            });
-            return map;
-        }, [memberSchedules, currentSeason?.id]);
-        
-        // 시간대별 참여 가능 인원 계산 (4시간 단위)
-        const timeRanges = [
-            { start: 5, end: 9, label: '05-09시' },
-            { start: 9, end: 13, label: '09-13시' },
-            { start: 13, end: 17, label: '13-17시' },
-            { start: 17, end: 21, label: '17-21시' },
-            { start: 21, end: 25, label: '21-01시' },
-            { start: 25, end: 29, label: '01-05시' }
-        ];
-        
-        const timeRangeAvailability = useMemo(() => {
-            const availability = {};
+            const [hoveredTimeRange, setHoveredTimeRange] = useState(null);
+            const [currentTime, setCurrentTime] = useState(new Date());
             
-            timeRanges.forEach(range => {
-                availability[range.label] = [];
-                
-                seasonMembers.forEach(member => {
-                    const schedule = memberSchedulesMap[member.id];
-                    if (schedule?.time_slots) {
-                        const ranges = schedule.time_slots.split(',');
-                        let isAvailable = false;
-                        
-                        ranges.forEach(timeSlot => {
-                            const [startStr, endStr] = timeSlot.split('-');
-                            if (startStr && endStr) {
-                                const startHour = parseInt(startStr.split(':')[0]);
-                                const endHour = parseInt(endStr.split(':')[0]);
-                                
-                                // 해당 시간대에 겹치는지 확인
-                                if ((startHour < range.end && endHour > range.start)) {
-                                    isAvailable = true;
-                                }
-                            }
-                        });
-                        
-                        if (isAvailable) {
-                            const battles = raidBattles.filter(b => 
-                                b.season_id === currentSeason?.id && b.member_name === member.name
-                            );
-                            availability[range.label].push({
-                                name: member.name,
-                                completed: battles.length === 3
-                            });
-                        }
+            // 1분마다 현재 시간 업데이트
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setCurrentTime(new Date());
+                }, 60000);
+                return () => clearInterval(timer);
+            }, []);
+            
+            // 현재 시간을 5-29 형식으로 변환
+            const getCurrentHour = () => {
+                const hour = currentTime.getHours();
+                return hour < 5 ? hour + 24 : hour;
+            };
+            
+            // 현재 시간이 어느 구간인지 확인 (1시간 단위로 변경)
+            const getCurrentTimeRange = () => {
+                const hour = getCurrentHour();
+                if (hour >= 5 && hour <= 29) {
+                    return `${String(hour >= 24 ? hour - 24 : hour).padStart(2, '0')}시`;
+                }
+                return '';
+            };
+            
+            // 멤버별 스케줄 정보 매핑
+            const seasonMembers = useMemo(() => {
+                if (!currentSeason?.id) return [];
+                return members.filter(m => m.season_id === currentSeason.id);
+            }, [members, currentSeason?.id]);
+            
+            const memberSchedulesMap = useMemo(() => {
+                const map = {};
+                memberSchedules.forEach(schedule => {
+                    if (schedule.season_id === currentSeason?.id) {
+                        map[schedule.member_id] = schedule;
                     }
                 });
-            });
+                return map;
+            }, [memberSchedules, currentSeason?.id]);
             
-            return availability;
-        }, [seasonMembers, memberSchedulesMap, raidBattles, currentSeason]);
-        
-        // 최대 인원수 계산
-        const maxMembers = Math.max(...Object.values(timeRangeAvailability).map(members => members.length), 1);
-        
-        // 현재 활동중인 멤버 계산 (30분 이내)
-        const activeMembers = useMemo(() => {
-            const thirtyMinutesAgo = new Date(currentTime.getTime() - 30 * 60000);
-            const recentBattles = raidBattles.filter(b => 
-                b.season_id === currentSeason?.id && 
-                new Date(b.timestamp) >= thirtyMinutesAgo
-            );
-            const uniqueMembers = [...new Set(recentBattles.map(b => b.member_name))];
-            return uniqueMembers.length;
-        }, [raidBattles, currentSeason, currentTime]);
-        
-        // 현재 시간대 참여 가능 인원
-        const currentTimeRangeMembers = timeRangeAvailability[getCurrentTimeRange()]?.length || 0;
-        
-        // 멤버별 통계 계산
-        const memberStats = useMemo(() => {
-            return seasonMembers.map(member => {
-                const schedule = memberSchedulesMap[member.id];
-                const memberBattles = raidBattles.filter(b => 
-                    b.season_id === currentSeason?.id && b.member_name === member.name
-                );
+            // 시간대별 참여 가능 인원 계산 (1시간 단위)
+            const hourlyRanges = [];
+            for (let h = 5; h <= 29; h++) {
+                const displayHour = h >= 24 ? h - 24 : h;
+                hourlyRanges.push({
+                    start: h,
+                    end: h + 1,
+                    label: `${String(displayHour).padStart(2, '0')}시`
+                });
+            }
+            
+            const hourlyAvailability = useMemo(() => {
+                const availability = {};
                 
-                // 첫 참여와 마지막 참여 시간
-                const sortedBattles = [...memberBattles].sort((a, b) => 
-                    new Date(a.timestamp) - new Date(b.timestamp)
-                );
-                const firstBattle = sortedBattles[0];
-                const lastBattle = sortedBattles[sortedBattles.length - 1];
-                
-                // 스케줄 준수 여부 확인
-                let status = '🔴'; // 미참여
-                let timeCompliance = '-';
-                
-                if (memberBattles.length > 0) {
-                    if (memberBattles.length === 3) {
-                        status = '🟢'; // 완료
-                    } else {
-                        status = '🟠'; // 진행중
-                    }
+                hourlyRanges.forEach(range => {
+                    availability[range.label] = [];
                     
-                    // 시간 준수 여부
-                    if (schedule?.time_slots && firstBattle) {
-                        const firstBattleTime = new Date(firstBattle.timestamp);
-                        const battleHour = firstBattleTime.getHours();
-                        const adjustedHour = battleHour < 5 ? battleHour + 24 : battleHour;
-                        
-                        let isInSchedule = false;
-                        const ranges = schedule.time_slots.split(',');
-                        ranges.forEach(range => {
-                            const [startStr, endStr] = range.split('-');
-                            if (startStr && endStr) {
-                                const startHour = parseInt(startStr.split(':')[0]);
-                                const endHour = parseInt(endStr.split(':')[0]);
-                                if (adjustedHour >= startHour && adjustedHour < endHour) {
-                                    isInSchedule = true;
+                    seasonMembers.forEach(member => {
+                        const schedule = memberSchedulesMap[member.id];
+                        if (schedule?.time_slots) {
+                            const ranges = schedule.time_slots.split(',');
+                            let isAvailable = false;
+                            
+                            ranges.forEach(timeSlot => {
+                                const [startStr, endStr] = timeSlot.split('-');
+                                if (startStr && endStr) {
+                                    const startHour = parseInt(startStr.split(':')[0]);
+                                    const endHour = parseInt(endStr.split(':')[0]);
+                                    
+                                    // 해당 시간대에 겹치는지 확인
+                                    if (startHour <= range.start && endHour > range.start) {
+                                        isAvailable = true;
+                                    }
                                 }
-                            }
-                        });
-                        
-                        if (isInSchedule) {
-                            timeCompliance = '✅';
-                        } else {
-                            timeCompliance = '⚠️';
-                            if (memberBattles.length === 3) {
-                                status = '🟡'; // 시간 외 완료
-                            }
-                        }
-                    }
-                } else if (schedule?.time_slots) {
-                    // 현재 시간이 스케줄 시간을 모두 지났는지 확인
-                    const currentHour = getCurrentHour();
-                    let hasUpcomingSchedule = false;
-                    
-                    const ranges = schedule.time_slots.split(',');
-                    ranges.forEach(range => {
-                        const [, endStr] = range.split('-');
-                        if (endStr) {
-                            const endHour = parseInt(endStr.split(':')[0]);
-                            if (endHour > currentHour) {
-                                hasUpcomingSchedule = true;
+                            });
+                            
+                            if (isAvailable) {
+                                const battles = raidBattles.filter(b => 
+                                    b.season_id === currentSeason?.id && b.member_name === member.name
+                                );
+                                availability[range.label].push({
+                                    name: member.name,
+                                    completed: battles.length === 3
+                                });
                             }
                         }
                     });
-                    
-                    if (hasUpcomingSchedule) {
-                        status = '🔵'; // 대기중
-                    }
-                }
+                });
                 
-                return {
-                    name: member.name,
-                    schedule: schedule?.time_slots || '미설정',
-                    status,
-                    firstBattle: firstBattle ? new Date(firstBattle.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-',
-                    lastBattle: lastBattle ? new Date(lastBattle.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-',
-                    deckUsed: memberBattles.length,
-                    timeCompliance
-                };
-            });
-        }, [seasonMembers, memberSchedulesMap, raidBattles, currentSeason]);
-        
-        // 통계 계산
-        const completedCount = memberStats.filter(m => m.status === '🟢' || m.status === '🟡').length;
-        const notParticipatedCount = memberStats.filter(m => m.status === '🔴').length;
-        
-        if (!currentSeason) {
+                return availability;
+            }, [seasonMembers, memberSchedulesMap, raidBattles, currentSeason, hourlyRanges]);
+            
+            // 최대 인원수 계산
+            const maxMembers = Math.max(...Object.values(hourlyAvailability).map(members => members.length), 1);
+            
+            // 현재 활동중인 멤버 계산 (30분 이내)
+            const activeMembers = useMemo(() => {
+                const thirtyMinutesAgo = new Date(currentTime.getTime() - 30 * 60000);
+                const recentBattles = raidBattles.filter(b => 
+                    b.season_id === currentSeason?.id && 
+                    new Date(b.timestamp) >= thirtyMinutesAgo
+                );
+                const uniqueMembers = [...new Set(recentBattles.map(b => b.member_name))];
+                return uniqueMembers.length;
+            }, [raidBattles, currentSeason, currentTime]);
+            
+            // 현재 시간대 참여 가능 인원
+            const currentTimeRangeMembers = hourlyAvailability[getCurrentTimeRange()]?.length || 0;
+            
+            // 멤버별 통계 계산
+            const memberStats = useMemo(() => {
+                return seasonMembers.map(member => {
+                    const schedule = memberSchedulesMap[member.id];
+                    const memberBattles = raidBattles.filter(b => 
+                        b.season_id === currentSeason?.id && b.member_name === member.name
+                    );
+                    
+                    // 첫 참여와 마지막 참여 시간
+                    const sortedBattles = [...memberBattles].sort((a, b) => 
+                        new Date(a.timestamp) - new Date(b.timestamp)
+                    );
+                    const firstBattle = sortedBattles[0];
+                    const lastBattle = sortedBattles[sortedBattles.length - 1];
+                    
+                    // 스케줄 준수 여부 확인
+                    let status = '🔴'; // 미참여
+                    let timeCompliance = '-';
+                    
+                    if (memberBattles.length > 0) {
+                        if (memberBattles.length === 3) {
+                            status = '🟢'; // 완료
+                        } else {
+                            status = '🟠'; // 진행중
+                        }
+                        
+                        // 시간 준수 여부
+                        if (schedule?.time_slots && firstBattle) {
+                            const firstBattleTime = new Date(firstBattle.timestamp);
+                            const battleHour = firstBattleTime.getHours();
+                            const adjustedHour = battleHour < 5 ? battleHour + 24 : battleHour;
+                            
+                            let isInSchedule = false;
+                            const ranges = schedule.time_slots.split(',');
+                            ranges.forEach(range => {
+                                const [startStr, endStr] = range.split('-');
+                                if (startStr && endStr) {
+                                    const startHour = parseInt(startStr.split(':')[0]);
+                                    const endHour = parseInt(endStr.split(':')[0]);
+                                    if (adjustedHour >= startHour && adjustedHour < endHour) {
+                                        isInSchedule = true;
+                                    }
+                                }
+                            });
+                            
+                            if (isInSchedule) {
+                                timeCompliance = '✅';
+                            } else {
+                                timeCompliance = '⚠️';
+                                if (memberBattles.length === 3) {
+                                    status = '🟡'; // 시간 외 완료
+                                }
+                            }
+                        }
+                    } else if (schedule?.time_slots) {
+                        // 현재 시간이 스케줄 시간을 모두 지났는지 확인
+                        const currentHour = getCurrentHour();
+                        let hasUpcomingSchedule = false;
+                        
+                        const ranges = schedule.time_slots.split(',');
+                        ranges.forEach(range => {
+                            const [, endStr] = range.split('-');
+                            if (endStr) {
+                                const endHour = parseInt(endStr.split(':')[0]);
+                                if (endHour > currentHour) {
+                                    hasUpcomingSchedule = true;
+                                }
+                            }
+                        });
+                        
+                        if (hasUpcomingSchedule) {
+                            status = '🔵'; // 대기중
+                        }
+                    }
+                    
+                    return {
+                        name: member.name,
+                        schedule: schedule?.time_slots || '미설정',
+                        status,
+                        firstBattle: firstBattle ? new Date(firstBattle.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-',
+                        lastBattle: lastBattle ? new Date(lastBattle.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-',
+                        deckUsed: memberBattles.length,
+                        timeCompliance
+                    };
+                });
+            }, [seasonMembers, memberSchedulesMap, raidBattles, currentSeason]);
+            
+            // 통계 계산
+            const completedCount = memberStats.filter(m => m.status === '🟢' || m.status === '🟡').length;
+            const notParticipatedCount = memberStats.filter(m => m.status === '🔴').length;
+            
+            if (!currentSeason) {
+                return (
+                    <div className="error-message">
+                        현재 활성화된 시즌이 없습니다. 설정에서 시즌을 생성해주세요.
+                    </div>
+                );
+            }
+            
+            // 2열로 나누기
+            const firstColumnRanges = hourlyRanges.slice(0, 12); // 05시-16시
+            const secondColumnRanges = hourlyRanges.slice(12, 25); // 17시-05시
+            
             return (
-                <div className="error-message">
-                    현재 활성화된 시즌이 없습니다. 설정에서 시즌을 생성해주세요.
+                <div>
+                    <h2>스케줄 관리</h2>
+                    
+                    {/* 타임라인 뷰 */}
+                    <div style={{
+                        background: '#f8f9fa',
+                        borderRadius: '10px',
+                        padding: '20px',
+                        marginTop: '20px',
+                        marginBottom: '30px'
+                    }}>
+                        {/* 상단 시간축 */}
+                        <div style={{
+                            borderBottom: '3px solid #333',
+                            marginBottom: '30px',
+                            paddingBottom: '40px',
+                            position: 'relative'
+                        }}>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                marginBottom: '10px',
+                                fontSize: '12px',
+                                fontWeight: '500'
+                            }}>
+                                {[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5].map((hour, idx) => (
+                                    <span key={idx} style={{fontSize: '11px'}}>
+                                        {String(hour).padStart(2, '0')}
+                                    </span>
+                                ))}
+                            </div>
+                            
+                            {/* 현재 시간 표시 */}
+                            {getCurrentHour() >= 5 && getCurrentHour() <= 29 && (
+                                <div style={{
+                                    position: 'absolute',
+                                    left: `${((getCurrentHour() - 5) / 24) * 100}%`,
+                                    top: '20px',
+                                    transform: 'translateX(-50%)',
+                                    zIndex: 10
+                                }}>
+                                    <div style={{
+                                        fontSize: '14px', 
+                                        marginBottom: '3px',
+                                        textAlign: 'center',
+                                        lineHeight: '1'
+                                    }}>
+                                        ▼
+                                    </div>
+                                    <div style={{
+                                        width: '2px',
+                                        height: '15px',
+                                        background: '#ff6b6b',
+                                        margin: '0 auto'
+                                    }} />
+                                    <div style={{
+                                        background: '#ff6b6b',
+                                        color: 'white',
+                                        padding: '3px 10px',
+                                        borderRadius: '12px',
+                                        fontSize: '11px',
+                                        whiteSpace: 'nowrap',
+                                        marginTop: '5px',
+                                        transform: 'translateX(-50%)',
+                                        position: 'relative',
+                                        left: '50%'
+                                    }}>
+                                        현재 시간 ({currentTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* 참여 가능 인원 분포 - 2열 레이아웃 */}
+                        <h4 style={{marginBottom: '20px', fontSize: '16px'}}>참여 가능 인원 분포</h4>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '30px',
+                            position: 'relative',
+                            marginBottom: '30px'
+                        }}>
+                            {/* 첫 번째 열 (05시-16시) */}
+                            <div>
+                                {firstColumnRanges.map((range, idx) => {
+                                    const members = hourlyAvailability[range.label] || [];
+                                    const barWidth = (members.length / maxMembers) * 90;
+                                    const isCurrentRange = getCurrentTimeRange() === range.label;
+                                    
+                                    return (
+                                        <div 
+                                            key={idx}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                marginBottom: '8px',
+                                                position: 'relative'
+                                            }}
+                                            onMouseEnter={() => setHoveredTimeRange(range.label)}
+                                            onMouseLeave={() => setHoveredTimeRange(null)}
+                                        >
+                                            <div style={{
+                                                width: '45px',
+                                                fontSize: '13px',
+                                                fontWeight: isCurrentRange ? 'bold' : 'normal',
+                                                color: isCurrentRange ? '#667eea' : '#333'
+                                            }}>
+                                                {range.label}:
+                                            </div>
+                                            
+                                            <div style={{
+                                                flex: 1,
+                                                marginRight: '10px'
+                                            }}>
+                                                <div style={{
+                                                    display: 'inline-block',
+                                                    width: `${barWidth}%`,
+                                                    minWidth: members.length > 0 ? '15px' : '0',
+                                                    height: '20px',
+                                                    background: isCurrentRange ? '#667eea' : '#90cdf4',
+                                                    borderRadius: '3px',
+                                                    transition: 'all 0.3s',
+                                                    cursor: 'pointer'
+                                                }} />
+                                            </div>
+                                            
+                                            <div style={{
+                                                width: '35px',
+                                                fontSize: '13px',
+                                                fontWeight: isCurrentRange ? 'bold' : 'normal',
+                                                textAlign: 'right'
+                                            }}>
+                                                {members.length}명
+                                            </div>
+                                            
+                                            {isCurrentRange && (
+                                                <span style={{
+                                                    marginLeft: '5px',
+                                                    fontSize: '14px',
+                                                    color: '#667eea'
+                                                }}>
+                                                    ←
+                                                </span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            
+                            {/* 두 번째 열 (17시-05시) */}
+                            <div>
+                                {secondColumnRanges.map((range, idx) => {
+                                    const members = hourlyAvailability[range.label] || [];
+                                    const barWidth = (members.length / maxMembers) * 90;
+                                    const isCurrentRange = getCurrentTimeRange() === range.label;
+                                    
+                                    return (
+                                        <div 
+                                            key={idx}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                marginBottom: '8px',
+                                                position: 'relative'
+                                            }}
+                                            onMouseEnter={() => setHoveredTimeRange(range.label)}
+                                            onMouseLeave={() => setHoveredTimeRange(null)}
+                                        >
+                                            <div style={{
+                                                width: '45px',
+                                                fontSize: '13px',
+                                                fontWeight: isCurrentRange ? 'bold' : 'normal',
+                                                color: isCurrentRange ? '#667eea' : '#333'
+                                            }}>
+                                                {range.label}:
+                                            </div>
+                                            
+                                            <div style={{
+                                                flex: 1,
+                                                marginRight: '10px'
+                                            }}>
+                                                <div style={{
+                                                    display: 'inline-block',
+                                                    width: `${barWidth}%`,
+                                                    minWidth: members.length > 0 ? '15px' : '0',
+                                                    height: '20px',
+                                                    background: isCurrentRange ? '#667eea' : '#90cdf4',
+                                                    borderRadius: '3px',
+                                                    transition: 'all 0.3s',
+                                                    cursor: 'pointer'
+                                                }} />
+                                            </div>
+                                            
+                                            <div style={{
+                                                width: '35px',
+                                                fontSize: '13px',
+                                                fontWeight: isCurrentRange ? 'bold' : 'normal',
+                                                textAlign: 'right'
+                                            }}>
+                                                {members.length}명
+                                            </div>
+                                            
+                                            {isCurrentRange && (
+                                                <span style={{
+                                                    marginLeft: '5px',
+                                                    fontSize: '14px',
+                                                    color: '#667eea'
+                                                }}>
+                                                    ←
+                                                </span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            
+                            {/* Hover 툴팁 */}
+                            {hoveredTimeRange && hourlyAvailability[hoveredTimeRange]?.length > 0 && (
+                                <div style={{
+                                    position: 'absolute',
+                                    left: '50%',
+                                    top: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    background: 'white',
+                                    border: '2px solid #667eea',
+                                    borderRadius: '8px',
+                                    padding: '15px',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                    zIndex: 100,
+                                    minWidth: '200px',
+                                    maxHeight: '300px',
+                                    overflowY: 'auto'
+                                }}>
+                                    <strong style={{fontSize: '14px'}}>{hoveredTimeRange}</strong>
+                                    <div style={{marginTop: '10px'}}>
+                                        {hourlyAvailability[hoveredTimeRange].slice(0, 10).map((member, idx) => (
+                                            <div key={idx} style={{fontSize: '12px', marginTop: '3px'}}>
+                                                • {member.name} {member.completed && '(완료)'}
+                                            </div>
+                                        ))}
+                                        {hourlyAvailability[hoveredTimeRange].length > 10 && (
+                                            <div style={{fontSize: '12px', marginTop: '5px', color: '#666'}}>
+                                                • ... {hourlyAvailability[hoveredTimeRange].length - 10}명 더
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* 실시간 참여 현황 */}
+                        <h4 style={{marginBottom: '15px', fontSize: '16px'}}>실시간 참여 현황</h4>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(4, 1fr)',
+                            gap: '15px',
+                            padding: '15px',
+                            background: 'white',
+                            borderRadius: '8px'
+                        }}>
+                            <div>
+                                <span style={{fontSize: '12px', color: '#666'}}>● 현재 활동중:</span>
+                                <span style={{fontSize: '14px', fontWeight: 'bold', marginLeft: '5px'}}>
+                                    {activeMembers}명
+                                </span>
+                                <div style={{fontSize: '10px', color: '#999', paddingLeft: '8px'}}>(최근 30분 내 기록)</div>
+                            </div>
+                            <div>
+                                <span style={{fontSize: '12px', color: '#666'}}>● 대기중:</span>
+                                <span style={{fontSize: '14px', fontWeight: 'bold', marginLeft: '5px'}}>
+                                    {currentTimeRangeMembers}명
+                                </span>
+                                <div style={{fontSize: '10px', color: '#999', paddingLeft: '8px'}}>(현재 시간대 참여 가능)</div>
+                            </div>
+                            <div>
+                                <span style={{fontSize: '12px', color: '#666'}}>● 완료:</span>
+                                <span style={{fontSize: '14px', fontWeight: 'bold', marginLeft: '5px'}}>
+                                    {completedCount}명
+                                </span>
+                                <div style={{fontSize: '10px', color: '#999', paddingLeft: '8px'}}>(3덱 모두 사용)</div>
+                            </div>
+                            <div>
+                                <span style={{fontSize: '12px', color: '#666'}}>● 미참여:</span>
+                                <span style={{fontSize: '14px', fontWeight: 'bold', marginLeft: '5px'}}>
+                                    {notParticipatedCount}명
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* 멤버별 상세 그리드 */}
+                    <h3 style={{marginBottom: '15px'}}>멤버별 참여 현황</h3>
+                    <div className="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>멤버</th>
+                                    <th>참여가능시간</th>
+                                    <th>상태</th>
+                                    <th>첫 기록</th>
+                                    <th>마지막</th>
+                                    <th>덱사용</th>
+                                    <th>시간준수</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {memberStats.map((stat, idx) => (
+                                    <tr key={idx}>
+                                        <td>{stat.name}</td>
+                                        <td style={{fontSize: '12px'}}>{stat.schedule}</td>
+                                        <td style={{
+                                            fontSize: '18px', 
+                                            textAlign: 'center',
+                                            cursor: 'help'
+                                        }} title={
+                                            stat.status === '🟢' ? '완료 (시간 내)' :
+                                            stat.status === '🟡' ? '완료 (시간 외)' :
+                                            stat.status === '🟠' ? '진행중' :
+                                            stat.status === '🔵' ? '대기중' :
+                                            '미참여'
+                                        }>
+                                            {stat.status}
+                                        </td>
+                                        <td>{stat.firstBattle}</td>
+                                        <td>{stat.lastBattle}</td>
+                                        <td>
+                                            <span style={{
+                                                fontWeight: stat.deckUsed === 3 ? 'bold' : 'normal',
+                                                color: stat.deckUsed === 3 ? '#4CAF50' : stat.deckUsed > 0 ? '#FFC107' : '#666'
+                                            }}>
+                                                {stat.deckUsed}/3
+                                            </span>
+                                        </td>
+                                        <td style={{
+                                            fontSize: '16px', 
+                                            textAlign: 'center',
+                                            cursor: 'help'
+                                        }} title={
+                                            stat.timeCompliance === '✅' ? '시간 내 참여' :
+                                            stat.timeCompliance === '⚠️' ? '시간 외 참여' :
+                                            '미참여'
+                                        }>
+                                            {stat.timeCompliance}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             );
-        }
-        
-        return (
-            <div>
-                <h2>스케줄 관리</h2>
-                
-                {/* 타임라인 뷰 */}
-                <div style={{
-                    background: '#f8f9fa',
-                    borderRadius: '10px',
-                    padding: '20px',
-                    marginTop: '20px',
-                    marginBottom: '30px'
-                }}>
-                    {/* 상단 시간축 */}
-                    <div style={{
-                        borderBottom: '3px solid #333',
-                        marginBottom: '30px',
-                        paddingBottom: '40px',
-                        position: 'relative'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            marginBottom: '10px',
-                            fontSize: '14px',
-                            fontWeight: '500'
-                        }}>
-                            <span>05:00</span>
-                            <span>09:00</span>
-                            <span>13:00</span>
-                            <span>17:00</span>
-                            <span>21:00</span>
-                            <span>01:00</span>
-                            <span>05:00</span>
-                        </div>
-                        
-                        {/* 현재 시간 표시 */}
-                        {getCurrentHour() >= 5 && getCurrentHour() <= 29 && (
-                            <div style={{
-                                position: 'absolute',
-                                left: `${((getCurrentHour() - 5) / 24) * 100}%`,
-                                top: '20px',
-                                transform: 'translateX(-50%)',
-                                zIndex: 10
-                            }}>
-                                <div style={{
-                                    fontSize: '14px', 
-                                    marginBottom: '3px',
-                                    textAlign: 'center',
-                                    lineHeight: '1'
-                                }}>
-                                    ▼
-                                </div>
-                                <div style={{
-                                    width: '2px',
-                                    height: '15px',
-                                    background: '#ff6b6b',
-                                    margin: '0 auto'
-                                }} />
-                                <div style={{
-                                    background: '#ff6b6b',
-                                    color: 'white',
-                                    padding: '3px 10px',
-                                    borderRadius: '12px',
-                                    fontSize: '11px',
-                                    whiteSpace: 'nowrap',
-                                    marginTop: '5px',
-                                    transform: 'translateX(-50%)',
-                                    position: 'relative',
-                                    left: '50%'
-                                }}>
-                                    현재 시간 ({currentTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    
-                    {/* 참여 가능 인원 분포 */}
-                    <h4 style={{marginBottom: '20px', fontSize: '16px'}}>참여 가능 인원 분포</h4>
-                    <div style={{position: 'relative', marginBottom: '30px'}}>
-                        {timeRanges.map((range, idx) => {
-                            const members = timeRangeAvailability[range.label] || [];
-                            const barWidth = (members.length / maxMembers) * 80; // 최대 80%
-                            const isCurrentRange = getCurrentTimeRange() === range.label;
-                            
-                            return (
-                                <div 
-                                    key={idx}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        marginBottom: '12px',
-                                        position: 'relative'
-                                    }}
-                                    onMouseEnter={() => setHoveredTimeRange(range.label)}
-                                    onMouseLeave={() => setHoveredTimeRange(null)}
-                                >
-                                    <div style={{
-                                        width: '90px',
-                                        fontSize: '14px',
-                                        fontWeight: isCurrentRange ? 'bold' : 'normal',
-                                        color: isCurrentRange ? '#667eea' : '#333'
-                                    }}>
-                                        {range.label}:
-                                    </div>
-                                    
-                                    <div style={{
-                                        flex: 1,
-                                        maxWidth: '400px',
-                                        marginRight: '15px'
-                                    }}>
-                                        <div style={{
-                                            display: 'inline-block',
-                                            width: `${barWidth}%`,
-                                            minWidth: members.length > 0 ? '20px' : '0',
-                                            height: '25px',
-                                            background: isCurrentRange ? '#667eea' : '#90cdf4',
-                                            borderRadius: '3px',
-                                            transition: 'all 0.3s',
-                                            cursor: 'pointer',
-                                            lineHeight: '25px',
-                                            paddingLeft: '5px',
-                                            color: 'rgba(255,255,255,0.8)',
-                                            fontSize: '14px',
-                                            overflow: 'hidden'
-                                        }}>
-                                            {'█'.repeat(Math.max(Math.ceil(members.length / 2), 1))}
-                                        </div>
-                                    </div>
-                                    
-                                    <div style={{
-                                        width: '60px',
-                                        fontSize: '14px',
-                                        fontWeight: isCurrentRange ? 'bold' : 'normal'
-                                    }}>
-                                        {members.length}명
-                                    </div>
-                                    
-                                    {isCurrentRange && (
-                                        <span style={{
-                                            marginLeft: '10px',
-                                            fontSize: '16px',
-                                            color: '#667eea'
-                                        }}>
-                                            ←
-                                        </span>
-                                    )}
-                                </div>
-                            );
-                        })}
-                        
-                        {/* Hover 툴팁 */}
-                        {hoveredTimeRange && timeRangeAvailability[hoveredTimeRange]?.length > 0 && (
-                            <div style={{
-                                position: 'absolute',
-                                right: '20px',
-                                top: '0',
-                                background: 'white',
-                                border: '2px solid #667eea',
-                                borderRadius: '8px',
-                                padding: '15px',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                                zIndex: 100,
-                                minWidth: '200px',
-                                maxHeight: '300px',
-                                overflowY: 'auto'
-                            }}>
-                                <strong style={{fontSize: '14px'}}>{hoveredTimeRange}</strong>
-                                <div style={{marginTop: '10px'}}>
-                                    {timeRangeAvailability[hoveredTimeRange].slice(0, 10).map((member, idx) => (
-                                        <div key={idx} style={{fontSize: '12px', marginTop: '3px'}}>
-                                            • {member.name} {member.completed && '(완료)'}
-                                        </div>
-                                    ))}
-                                    {timeRangeAvailability[hoveredTimeRange].length > 10 && (
-                                        <div style={{fontSize: '12px', marginTop: '5px', color: '#666'}}>
-                                            • ... {timeRangeAvailability[hoveredTimeRange].length - 10}명 더
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    
-                    {/* 실시간 참여 현황 */}
-                    <h4 style={{marginBottom: '15px', fontSize: '16px'}}>실시간 참여 현황</h4>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(4, 1fr)',
-                        gap: '15px',
-                        padding: '15px',
-                        background: 'white',
-                        borderRadius: '8px'
-                    }}>
-                        <div>
-                            <span style={{fontSize: '12px', color: '#666'}}>● 현재 활동중:</span>
-                            <span style={{fontSize: '14px', fontWeight: 'bold', marginLeft: '5px'}}>
-                                {activeMembers}명
-                            </span>
-                            <div style={{fontSize: '10px', color: '#999', paddingLeft: '8px'}}>(최근 30분 내 기록)</div>
-                        </div>
-                        <div>
-                            <span style={{fontSize: '12px', color: '#666'}}>● 대기중:</span>
-                            <span style={{fontSize: '14px', fontWeight: 'bold', marginLeft: '5px'}}>
-                                {currentTimeRangeMembers}명
-                            </span>
-                            <div style={{fontSize: '10px', color: '#999', paddingLeft: '8px'}}>(현재 시간대 참여 가능)</div>
-                        </div>
-                        <div>
-                            <span style={{fontSize: '12px', color: '#666'}}>● 완료:</span>
-                            <span style={{fontSize: '14px', fontWeight: 'bold', marginLeft: '5px'}}>
-                                {completedCount}명
-                            </span>
-                            <div style={{fontSize: '10px', color: '#999', paddingLeft: '8px'}}>(3덱 모두 사용)</div>
-                        </div>
-                        <div>
-                            <span style={{fontSize: '12px', color: '#666'}}>● 미참여:</span>
-                            <span style={{fontSize: '14px', fontWeight: 'bold', marginLeft: '5px'}}>
-                                {notParticipatedCount}명
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                
-                {/* 멤버별 상세 그리드 */}
-                <h3 style={{marginBottom: '15px'}}>멤버별 참여 현황</h3>
-                <div className="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>멤버</th>
-                                <th>참여가능시간</th>
-                                <th>상태</th>
-                                <th>첫 기록</th>
-                                <th>마지막</th>
-                                <th>덱사용</th>
-                                <th>시간준수</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {memberStats.map((stat, idx) => (
-                                <tr key={idx}>
-                                    <td>{stat.name}</td>
-                                    <td style={{fontSize: '12px'}}>{stat.schedule}</td>
-                                    <td style={{
-                                        fontSize: '18px', 
-                                        textAlign: 'center',
-                                        cursor: 'help'
-                                    }} title={
-                                        stat.status === '🟢' ? '완료 (시간 내)' :
-                                        stat.status === '🟡' ? '완료 (시간 외)' :
-                                        stat.status === '🟠' ? '진행중' :
-                                        stat.status === '🔵' ? '대기중' :
-                                        '미참여'
-                                    }>
-                                        {stat.status}
-                                    </td>
-                                    <td>{stat.firstBattle}</td>
-                                    <td>{stat.lastBattle}</td>
-                                    <td>
-                                        <span style={{
-                                            fontWeight: stat.deckUsed === 3 ? 'bold' : 'normal',
-                                            color: stat.deckUsed === 3 ? '#4CAF50' : stat.deckUsed > 0 ? '#FFC107' : '#666'
-                                        }}>
-                                            {stat.deckUsed}/3
-                                        </span>
-                                    </td>
-                                    <td style={{
-                                        fontSize: '16px', 
-                                        textAlign: 'center',
-                                        cursor: 'help'
-                                    }} title={
-                                        stat.timeCompliance === '✅' ? '시간 내 참여' :
-                                        stat.timeCompliance === '⚠️' ? '시간 외 참여' :
-                                        '미참여'
-                                    }>
-                                        {stat.timeCompliance}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        );
-    };
+        };
 
     // 설정 컴포넌트
     const Settings = () => {
