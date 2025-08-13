@@ -431,8 +431,7 @@ export default function Home() {
                     {levelBosses.map(boss => {
                         const bossBattles = raidBattles.filter(b => 
                             b.boss_id === boss.id && 
-                            b.season_id === currentSeason.id &&
-                            (currentLevel === 999 || b.level === currentLevel)
+                            b.season_id === currentSeason.id
                         );
                         const totalDamage = bossBattles.reduce((sum, b) => sum + (parseInt(b.damage) || 0), 0);
                         
@@ -453,13 +452,8 @@ export default function Home() {
                                         <div>
                                             누적 대미지: {totalDamage.toLocaleString()}
                                         </div>
-                                        {boss.mechanic && (
-                                            <div style={{marginTop: '10px', fontSize: '12px', color: '#666'}}>
-                                                기믹: {boss.mechanic}
-                                            </div>
-                                        )}
                                     </div>
-                                    {expandedBossId === boss.id && bossBattles.length > 0 && (
+                                    {expandedBossId === boss.id && (
                                         <div style={{
                                             background: '#f8f9fa',
                                             padding: '15px',
@@ -469,13 +463,27 @@ export default function Home() {
                                             border: '2px solid #e0e0e0',
                                             borderTop: 'none'
                                         }}>
-                                            <strong>참여 멤버 ({bossBattles.length}명):</strong>
-                                            {bossBattles.map(battle => (
-                                                <div key={battle.id} style={{marginTop: '5px'}}>
-                                                    • {battle.member_name}: {parseInt(battle.damage).toLocaleString()} 
-                                                    <span style={{fontSize: '12px', color: '#666'}}> - {battle.deck_composition}</span>
+                                            {boss.mechanic && (
+                                                <div style={{marginBottom: '10px'}}>
+                                                    <strong>기믹:</strong>
+                                                    <div style={{marginTop: '5px', fontSize: '13px', color: '#666'}}>
+                                                        {boss.mechanic}
+                                                    </div>
                                                 </div>
-                                            ))}
+                                            )}
+                                            <strong>참여 멤버 ({bossBattles.length}명):</strong>
+                                            {bossBattles.length > 0 ? (
+                                                bossBattles.map(battle => (
+                                                    <div key={battle.id} style={{marginTop: '5px', fontSize: '13px'}}>
+                                                        • {battle.member_name}: {parseInt(battle.damage).toLocaleString()} 
+                                                        <span style={{color: '#666'}}> - {battle.deck_composition}</span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div style={{marginTop: '5px', fontSize: '13px', color: '#666'}}>
+                                                    아직 참여한 멤버가 없습니다.
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </React.Fragment>
@@ -503,13 +511,8 @@ export default function Home() {
                                         <div className="hp-bar">
                                             <div className="hp-fill" style={{width: `${hpPercent}%`}}></div>
                                         </div>
-                                        {boss.mechanic && (
-                                            <div style={{marginTop: '10px', fontSize: '12px', color: '#666'}}>
-                                                기믹: {boss.mechanic}
-                                            </div>
-                                        )}
                                     </div>
-                                    {expandedBossId === boss.id && bossBattles.length > 0 && (
+                                    {expandedBossId === boss.id && (
                                         <div style={{
                                             background: '#f8f9fa',
                                             padding: '15px',
@@ -519,13 +522,27 @@ export default function Home() {
                                             border: '2px solid #e0e0e0',
                                             borderTop: 'none'
                                         }}>
-                                            <strong>참여 멤버 ({bossBattles.length}명):</strong>
-                                            {bossBattles.map(battle => (
-                                                <div key={battle.id} style={{marginTop: '5px'}}>
-                                                    • {battle.member_name}: {parseInt(battle.damage).toLocaleString()} 
-                                                    <span style={{fontSize: '12px', color: '#666'}}> - {battle.deck_composition}</span>
+                                            {boss.mechanic && (
+                                                <div style={{marginBottom: '10px'}}>
+                                                    <strong>기믹:</strong>
+                                                    <div style={{marginTop: '5px', fontSize: '13px', color: '#666'}}>
+                                                        {boss.mechanic}
+                                                    </div>
                                                 </div>
-                                            ))}
+                                            )}
+                                            <strong>참여 멤버 ({bossBattles.length}명):</strong>
+                                            {bossBattles.length > 0 ? (
+                                                bossBattles.map(battle => (
+                                                    <div key={battle.id} style={{marginTop: '5px', fontSize: '13px'}}>
+                                                        • {battle.member_name}: {parseInt(battle.damage).toLocaleString()} 
+                                                        <span style={{color: '#666'}}> - {battle.deck_composition}</span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div style={{marginTop: '5px', fontSize: '13px', color: '#666'}}>
+                                                    아직 참여한 멤버가 없습니다.
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </React.Fragment>
