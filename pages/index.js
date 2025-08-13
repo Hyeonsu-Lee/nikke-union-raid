@@ -1568,6 +1568,29 @@ export default function Home() {
                 
                 {/* 멤버별 상세 그리드 */}
                 <h3 style={{marginBottom: '15px'}}>멤버별 참여 현황</h3>
+                {/* 범례 추가 */}
+                <div style={{
+                    background: '#f0f0f0',
+                    padding: '10px 15px',
+                    borderRadius: '8px',
+                    marginBottom: '15px',
+                    display: 'flex',
+                    gap: '20px',
+                    flexWrap: 'wrap',
+                    fontSize: '13px'
+                }}>
+                    <div style={{fontWeight: 'bold', marginRight: '10px'}}>상태:</div>
+                    <span>🟢 완료(시간 내)</span>
+                    <span>🟡 완료(시간 외)</span>
+                    <span>🟠 진행중</span>
+                    <span>🔵 대기중</span>
+                    <span>🔴 미참여</span>
+                    <div style={{width: '100%', height: '1px'}}></div>
+                    <div style={{fontWeight: 'bold', marginRight: '10px'}}>시간준수:</div>
+                    <span>✅ 시간 내 참여</span>
+                    <span>⚠️ 시간 외 참여</span>
+                    <span>- 미참여</span>
+                </div>
                 <div className="table-container">
                     <table>
                         <thead>
