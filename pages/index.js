@@ -120,14 +120,14 @@ export default function Home() {
             e.target.value = parseInt(value).toLocaleString();
         }
     };
-    const loadData = async (unionId) => {
+    const loadData = async (unionId, forceSeasonReload = false) => {
         // unionId가 없으면 unionInfo에서 가져오기
         const currentUnionId = unionId || unionInfo?.unionId;
         if (!currentUnionId) return;
 
         try {
             // 시즌이 없으면 시즌 목록만 먼저 조회
-            if (!currentSeason) {
+            if (!currentSeason || forceSeasonReload) {
                 const res = await fetch(`/api/data?unionId=${currentUnionId}`);
                 const data = await res.json();
                 console.log('받아온 시즌 데이터:', data.seasons);
@@ -278,22 +278,14 @@ export default function Home() {
             });
             
             if (res.ok) {
-                if (endpoint === 'seasons') {
-                    const tempSeason = currentSeason;
-                    setCurrentSeason(null);
-                    await Promise.all([
-                        loadData(),  // currentSeason이 null이므로 시즌 목록 재조회
-                        showMessage('데이터가 저장되었습니다.', 'success')
-                    ]);
-                    // loadData 내부에서 활성 시즌 자동 복원됨
-                } else {
-                    await Promise.all([
-                        currentSeason 
+                await Promise.all([
+                    endpoint === 'seasons' 
+                        ? loadData(null, true)  // 원래대로
+                        : currentSeason 
                             ? loadSeasonData(currentSeason.id) 
                             : Promise.resolve(),
-                        showMessage('데이터가 저장되었습니다.', 'success')
-                    ]);
-                }
+                    showMessage('데이터가 저장되었습니다.', 'success')
+                ]);
             }
         } catch (error) {
             showMessage('저장 실패: ' + error.message, 'error');
@@ -314,32 +306,23 @@ export default function Home() {
             const res = await fetch(`/api/${endpoint}?id=${id}`, options);
             
             if (res.ok) {
-                if (endpoint === 'seasons') {
-                    // 삭제한 시즌이 현재 시즌이면 초기화
-                    if (currentSeason && currentSeason.id === parseInt(id)) {
-                        setBosses([]);
-                        setMembers([]);
-                        setMemberSchedules([]);
-                        setMockBattles([]);
-                        setRaidBattles([]);
-                        setLastSync(null);
-                    }
-                    
-                    // 시즌 목록 재조회를 위해 currentSeason을 임시로 null
-                    const tempSeason = currentSeason;
+                if (endpoint === 'seasons' && currentSeason && currentSeason.id === parseInt(id)) {
                     setCurrentSeason(null);
-                    await Promise.all([
-                        loadData(),
-                        showMessage('삭제되었습니다.', 'success')
-                    ]);
-                } else {
-                    await Promise.all([
-                        currentSeason 
+                    setBosses([]);
+                    setMembers([]);
+                    setMemberSchedules([]);
+                    setMockBattles([]);
+                    setRaidBattles([]);
+                    setLastSync(null);
+                }
+                await Promise.all([
+                    endpoint === 'seasons'
+                        ? loadData(null, true)  // 원래대로
+                        : currentSeason 
                             ? loadSeasonData(currentSeason.id) 
                             : Promise.resolve(),
-                        showMessage('삭제되었습니다.', 'success')
-                    ]);
-                }
+                    showMessage('삭제되었습니다.', 'success')
+                ]);
             }
         } catch (error) {
             showMessage('삭제 실패: ' + error.message, 'error');
