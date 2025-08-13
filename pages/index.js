@@ -117,7 +117,7 @@ export default function Home() {
             e.target.value = parseInt(value).toLocaleString();
         }
     };
-    const loadData = async () => {
+    const loadData = async (unionId) => {
         // unionId가 없으면 unionInfo에서 가져오기
         const currentUnionId = unionId || unionInfo?.unionId;
         if (!currentUnionId) return;
@@ -269,9 +269,7 @@ export default function Home() {
     
     const saveData = async (endpoint, data, method = 'POST') => {
         try {
-            const url = endpoint === 'member-schedules' 
-                ? `/api/${endpoint}` 
-                : `/api/${endpoint}?unionId=${unionInfo.unionId}`;
+            const url = `/api/${endpoint}`;
 
             const res = await fetch(url, {
                 method,
@@ -296,7 +294,9 @@ export default function Home() {
     const deleteData = async (endpoint, id) => {
         try {
             const res = await fetch(`/api/${endpoint}?id=${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },  // 추가
+                body: JSON.stringify({ unionId: unionInfo.unionId })  // 추가
             });
             
             if (res.ok) {

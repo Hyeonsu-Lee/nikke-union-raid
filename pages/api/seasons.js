@@ -5,14 +5,23 @@ export default async function handler(req, res) {
     const { method } = req;
     
     switch (method) {
-        case 'POST':
-            const { name, date, copyFromSeason } = req.body;
+        case 'POST': {
+            const { name, date, copyFromSeason, unionId } = req.body;
+            
+            if (!unionId) {
+                return res.status(400).json({ error: 'Union ID is required' });
+            }
             
             try {
-                // 새 시즌 생성
+                // 새 시즌 생성 (union_id 추가)
                 const { data: newSeason, error: seasonError } = await supabase
                     .from('seasons')
-                    .insert([{ name, date, is_active: false }])
+                    .insert([{ 
+                        union_id: unionId,
+                        name, 
+                        date, 
+                        is_active: false 
+                    }])
                     .select()
                     .single();
                 
@@ -20,18 +29,27 @@ export default async function handler(req, res) {
                 
                 // 이전 시즌에서 멤버 복사
                 if (copyFromSeason) {
-                    const { data: sourceMembers } = await supabase
-                        .from('members')
-                        .select('name')
-                        .eq('season_id', copyFromSeason);
+                    // 복사할 시즌이 같은 union의 시즌인지 확인
+                    const { data: sourceSeason } = await supabase
+                        .from('seasons')
+                        .select('union_id')
+                        .eq('id', copyFromSeason)
+                        .single();
                     
-                    if (sourceMembers && sourceMembers.length > 0) {
-                        const newMembers = sourceMembers.map(member => ({
-                            season_id: newSeason.id,
-                            name: member.name
-                        }));
+                    if (sourceSeason && sourceSeason.union_id === unionId) {
+                        const { data: sourceMembers } = await supabase
+                            .from('members')
+                            .select('name')
+                            .eq('season_id', copyFromSeason);
                         
-                        await supabase.from('members').insert(newMembers);
+                        if (sourceMembers && sourceMembers.length > 0) {
+                            const newMembers = sourceMembers.map(member => ({
+                                season_id: newSeason.id,
+                                name: member.name
+                            }));
+                            
+                            await supabase.from('members').insert(newMembers);
+                        }
                     }
                 }
                 
@@ -40,17 +58,33 @@ export default async function handler(req, res) {
                 res.status(500).json({ error: error.message });
             }
             break;
+        }
             
-        case 'PUT':
-            const { id, isActive } = req.body;
+        case 'PUT': {
+            const { id, isActive, unionId } = req.body;
+            
+            if (!unionId) {
+                return res.status(400).json({ error: 'Union ID is required' });
+            }
             
             try {
+                // 활성화할 시즌이 해당 union의 시즌인지 확인
+                const { data: targetSeason } = await supabase
+                    .from('seasons')
+                    .select('union_id')
+                    .eq('id', id)
+                    .single();
+                
+                if (!targetSeason || targetSeason.union_id !== unionId) {
+                    return res.status(403).json({ error: 'Unauthorized access' });
+                }
+                
                 if (isActive) {
-                    // 모든 시즌 비활성화
+                    // 같은 union의 모든 시즌 비활성화
                     await supabase
                         .from('seasons')
                         .update({ is_active: false })
-                        .neq('id', 0); // 모든 행 업데이트
+                        .eq('union_id', unionId);
                 }
                 
                 // 선택한 시즌 활성화
@@ -66,9 +100,27 @@ export default async function handler(req, res) {
                 res.status(500).json({ error: error.message });
             }
             break;
+        }
             
-        case 'DELETE':
+        case 'DELETE': {
+            const { unionId } = req.body;
+            
+            if (!unionId) {
+                return res.status(400).json({ error: 'Union ID is required' });
+            }
+            
             try {
+                // 삭제할 시즌이 해당 union의 시즌인지 확인
+                const { data: targetSeason } = await supabase
+                    .from('seasons')
+                    .select('union_id')
+                    .eq('id', req.query.id)
+                    .single();
+                
+                if (!targetSeason || targetSeason.union_id !== unionId) {
+                    return res.status(403).json({ error: 'Unauthorized access' });
+                }
+                
                 const { error } = await supabase
                     .from('seasons')
                     .delete()
@@ -81,6 +133,7 @@ export default async function handler(req, res) {
                 res.status(500).json({ error: error.message });
             }
             break;
+        }
             
         default:
             res.status(405).json({ error: 'Method not allowed' });
