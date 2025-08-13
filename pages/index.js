@@ -130,9 +130,9 @@ export default function Home() {
             if (!currentSeason) {
                 const res = await fetch(`/api/data?unionId=${currentUnionId}`);
                 const data = await res.json();
-                
+                console.log('받아온 시즌 데이터:', data.seasons);
                 setSeasons(data.seasons || []);
-                
+                console.log('seasons state 업데이트 후:', seasons);
                 // 활성 시즌 찾기
                 const activeSeason = (data.seasons || []).find(s => s.is_active);
                 if (activeSeason) {
