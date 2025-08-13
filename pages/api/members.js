@@ -36,7 +36,7 @@ export default async function handler(req, res) {
                     .eq('season_id', seasonId)
                     .is('deleted_at', null);  // 삭제되지 않은 것만
                 
-                res.status(200).json(updated || []);
+                res.status(200).json({ success: true });
             } catch (error) {
                 res.status(500).json({ error: error.message });
             }
