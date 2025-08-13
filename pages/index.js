@@ -126,38 +126,44 @@ export default function Home() {
         if (!currentUnionId) return;
 
         try {
+            // 시즌이 없으면 시즌 목록만 먼저 조회
+            if (!currentSeason) {
+                const res = await fetch(`/api/data?unionId=${currentUnionId}`);
+                const data = await res.json();
+                
+                setSeasons(data.seasons || []);
+                
+                // 활성 시즌 찾기
+                const activeSeason = (data.seasons || []).find(s => s.is_active);
+                if (activeSeason) {
+                    setCurrentSeason(activeSeason);
+                    // 활성 시즌이 있으면 해당 시즌 데이터 조회
+                    await loadSeasonData(activeSeason.id);
+                }
+                return;
+            }
+            
+            // 활성 시즌이 있으면 시즌 데이터 조회
+            await loadSeasonData(currentSeason.id);
+            
+        } catch (error) {
+            console.error('데이터 로드 실패:', error);
+        }
+    };
+
+    // 새로운 함수 - 시즌 데이터만 조회
+    const loadSeasonData = async (seasonId) => {
+        if (!seasonId) return;
+        
+        try {
             const url = lastSync 
-                ? `/api/data?lastSync=${lastSync}&unionId=${currentUnionId}`
-                : `/api/data?unionId=${currentUnionId}`;
+                ? `/api/data?seasonId=${seasonId}&lastSync=${lastSync}`
+                : `/api/data?seasonId=${seasonId}`;
             const res = await fetch(url);
             const data = await res.json();
             
             if (data.changes) {
-                // 변경분 적용
-                if (data.changes.seasons?.updated?.length > 0) {
-                    setSeasons(prev => {
-                        const updated = [...prev];
-                        data.changes.seasons.updated.forEach(newItem => {
-                            const index = updated.findIndex(item => item.id === newItem.id);
-                            if (index >= 0) {
-                                updated[index] = newItem;
-                            } else {
-                                updated.push(newItem);
-                            }
-                        });
-                        
-                        // setState 콜백 내에서 활성 시즌 찾기
-                        const activeSeason = updated.find(s => s.is_active);
-                        if (activeSeason) {
-                            setCurrentSeason(activeSeason);
-                        } else {
-                            setCurrentSeason(null);
-                        }
-                        
-                        return updated;
-                    });
-                }
-                
+                // 변경분 적용 (기존 코드 그대로)
                 if (data.changes.members) {
                     setMembers(prev => {
                         let updated = [...prev];
@@ -247,26 +253,17 @@ export default function Home() {
                     });
                 }
             } else {
-                // 첫 로드 - 전체 데이터
-                setSeasons(data.seasons || []);
+                // 첫 로드 - 전체 데이터 (시즌 제외)
                 setBosses(data.bosses || []);
                 setMembers(data.members || []);
                 setMockBattles(data.mockBattles || []);
                 setRaidBattles(data.raidBattles || []);
                 setMemberSchedules(data.memberSchedules || []);
-                
-                // 첫 로드 시 활성 시즌 설정
-                const activeSeason = (data.seasons || []).find(s => s.is_active);
-                if (activeSeason) {
-                    setCurrentSeason(activeSeason);
-                } else {
-                    setCurrentSeason(null);
-                }
             }
             
             setLastSync(data.timestamp);
         } catch (error) {
-            console.error('데이터 로드 실패:', error);
+            console.error('시즌 데이터 로드 실패:', error);
         }
     };
     
@@ -277,15 +274,12 @@ export default function Home() {
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...data,
-                    unionId: unionInfo.unionId // body에도 포함
-                })
+                body: JSON.stringify(data)
             });
             
             if (res.ok) {
                 await Promise.all([
-                    loadData(),
+                    currentSeason ? loadSeasonData(currentSeason.id) : Promise.resolve(),
                     showMessage('데이터가 저장되었습니다.', 'success')
                 ]);
             }
@@ -293,20 +287,25 @@ export default function Home() {
             showMessage('저장 실패: ' + error.message, 'error');
         }
     };
-    
+
     const deleteData = async (endpoint, id) => {
         try {
-            const res = await fetch(`/api/${endpoint}?id=${id}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },  // 추가
-                body: JSON.stringify({ unionId: unionInfo.unionId })  // 추가
-            });
+            // 기본 옵션
+            let options = { method: 'DELETE' };
+            
+            // seasons만 특별 처리
+            if (endpoint === 'seasons') {
+                options.headers = { 'Content-Type': 'application/json' };
+                options.body = JSON.stringify({ unionId: unionInfo.unionId });
+            }
+            
+            const res = await fetch(`/api/${endpoint}?id=${id}`, options);
             
             if (res.ok) {
-              await Promise.all([
-                loadData(),
-                showMessage('삭제되었습니다.', 'success')
-              ]);
+                await Promise.all([
+                    currentSeason ? loadSeasonData(currentSeason.id) : Promise.resolve(),
+                    showMessage('삭제되었습니다.', 'success')
+                ]);
             }
         } catch (error) {
             showMessage('삭제 실패: ' + error.message, 'error');
@@ -1026,7 +1025,7 @@ export default function Home() {
             const selectedBoss = bosses.find(b => b.id === parseInt(bossId));
             const bossOrder = ATTRIBUTES.indexOf(selectedBoss.attribute);
             const levelOffset = level === '999' ? 3 : parseInt(level) - 1;
-            const actualBossId = (bossOrder * 4) + levelOffset + 1;
+            const actualBossId = (currentSeason.id - 1) * 20 + (bossOrder * 4) + levelOffset + 1;
             
             // 초기화
             memberNameRef.current.value = '';
@@ -1848,8 +1847,13 @@ export default function Home() {
         const activateSeason = async (seasonId) => {
             await saveData('seasons', {
                 id: seasonId,
-                isActive: true
+                isActive: true,
+                unionId: unionInfo.unionId
             }, 'PUT');
+            
+            // 시즌 변경 후 해당 시즌 데이터 로드
+            setCurrentSeason(seasons.find(s => s.id === seasonId));
+            await loadSeasonData(seasonId);
         };
         
         return (
@@ -1998,6 +2002,41 @@ export default function Home() {
             
             const formData = new FormData(formRef.current);
             const newBosses = [];
+            let hasError = false;
+    
+            // 1단계: 모든 보스 이름 먼저 체크
+            for (let idx = 0; idx < ATTRIBUTES.length; idx++) {
+                const attr = ATTRIBUTES[idx];
+                const name = formData.get(`boss-name-${idx}`);
+                
+                if (!name || name.trim() === '') {
+                    showMessage(`${attr} 보스 이름을 입력해주세요.`, 'error');
+                    hasError = true;
+                }
+            }
+            
+            // 2단계: 모든 HP 체크
+            for (let idx = 0; idx < ATTRIBUTES.length; idx++) {
+                const attr = ATTRIBUTES[idx];
+                
+                for (let level = 1; level <= 3; level++) {
+                    const hpValue = formData.get(`boss-hp-${level}-${idx}`);
+                    const hp = hpValue ? hpValue.replace(/,/g, '') : '';
+                    
+                    if (!hp || hp === '' || hp === '0') {
+                        showMessage(`${attr} 레벨 ${level} HP를 입력해주세요.`, 'error');
+                        hasError = true;
+                    } else if (isNaN(hp) || parseInt(hp) <= 0) {
+                        showMessage(`${attr} 레벨 ${level} HP는 양수여야 합니다.`, 'error');
+                        hasError = true;
+                    }
+                }
+            }
+            
+            // 에러가 있으면 중단
+            if (hasError) {
+                return;
+            }
             
             ATTRIBUTES.forEach((attr, idx) => {
                 const name = formData.get(`boss-name-${idx}`);
@@ -2039,6 +2078,12 @@ export default function Home() {
                 });
             });
             
+            // 4단계: 최종 검증
+            if (newBosses.length !== 20) {
+                showMessage(`보스 개수 오류: ${newBosses.length}개 (20개여야 함)`, 'error');
+                return;
+            }
+
             await saveData('bosses', {
                 seasonId: currentSeason.id,
                 bosses: newBosses
