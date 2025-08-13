@@ -388,97 +388,153 @@ export default function Home() {
     
     // 현재 레벨 보스 현황
     const CurrentLevelBosses = () => {
-        const currentLevel = useMemo(() => {
-            if (!currentSeason) return 1;
+            const [expandedBossId, setExpandedBossId] = useState(null);
             
-            for (let level = 1; level <= 3; level++) {
-                const levelBosses = bosses.filter(b => 
-                    b.season_id === currentSeason.id && b.level === level
-                );
+            const currentLevel = useMemo(() => {
+                if (!currentSeason) return 1;
                 
-                if (levelBosses.length === 0) continue;
-                
-                const allBossesDefeated = levelBosses.every(boss => {
-                    const bossBattles = raidBattles.filter(b => 
-                        b.boss_id === boss.id && 
-                        b.season_id === currentSeason.id
+                for (let level = 1; level <= 3; level++) {
+                    const levelBosses = bosses.filter(b => 
+                        b.season_id === currentSeason.id && b.level === level
                     );
-                    const totalDamage = bossBattles.reduce((sum, b) => sum + (parseInt(b.damage) || 0), 0);
-                    return totalDamage >= boss.hp;
-                });
-                
-                if (!allBossesDefeated) return level;
-            }
-            
-            return 999;
-        }, [currentSeason, bosses, raidBattles]);
-        
-        const levelBosses = bosses.filter(b => 
-            b.season_id === currentSeason?.id && b.level === currentLevel
-        );
-        
-        return (
-            <div>
-                <h4 style={{marginBottom: '10px', color: '#666'}}>
-                    현재 레벨: {currentLevel === 999 ? '무한대' : `레벨 ${currentLevel}`}
-                </h4>
-                {levelBosses.map(boss => {
-                    const bossBattles = raidBattles.filter(b => 
-                        b.boss_id === boss.id && 
-                        b.season_id === currentSeason.id &&
-                        (currentLevel === 999 || b.level === currentLevel)
-                    );
-                    const totalDamage = bossBattles.reduce((sum, b) => sum + (parseInt(b.damage) || 0), 0);
                     
-                    if (currentLevel === 999) {
-                        return (
-                            <div key={boss.id} className="boss-card">
-                                <div className="boss-header">
-                                    <span className="boss-name">{boss.name}</span>
-                                    <span className={`boss-attribute attribute-${boss.attribute}`}>
-                                        {boss.attribute}
-                                    </span>
-                                </div>
-                                <div>
-                                    누적 대미지: {totalDamage.toLocaleString()}
-                                </div>
-                                {boss.mechanic && (
-                                    <div style={{marginTop: '10px', fontSize: '12px', color: '#666'}}>
-                                        기믹: {boss.mechanic}
-                                    </div>
-                                )}
-                            </div>
+                    if (levelBosses.length === 0) continue;
+                    
+                    const allBossesDefeated = levelBosses.every(boss => {
+                        const bossBattles = raidBattles.filter(b => 
+                            b.boss_id === boss.id && 
+                            b.season_id === currentSeason.id
                         );
-                    } else {
-                        const remainingHp = Math.max(0, boss.hp - totalDamage);
-                        const hpPercent = (remainingHp / boss.hp) * 100;
+                        const totalDamage = bossBattles.reduce((sum, b) => sum + (parseInt(b.damage) || 0), 0);
+                        return totalDamage >= boss.hp;
+                    });
+                    
+                    if (!allBossesDefeated) return level;
+                }
+                
+                return 999;
+            }, [currentSeason, bosses, raidBattles]);
+            
+            const toggleBossDetails = (bossId) => {
+                setExpandedBossId(expandedBossId === bossId ? null : bossId);
+            };
+            
+            const levelBosses = bosses.filter(b => 
+                b.season_id === currentSeason?.id && b.level === currentLevel
+            );
+            
+            return (
+                <div>
+                    <h4 style={{marginBottom: '10px', color: '#666'}}>
+                        현재 레벨: {currentLevel === 999 ? '무한대' : `레벨 ${currentLevel}`}
+                    </h4>
+                    {levelBosses.map(boss => {
+                        const bossBattles = raidBattles.filter(b => 
+                            b.boss_id === boss.id && 
+                            b.season_id === currentSeason.id &&
+                            (currentLevel === 999 || b.level === currentLevel)
+                        );
+                        const totalDamage = bossBattles.reduce((sum, b) => sum + (parseInt(b.damage) || 0), 0);
                         
-                        return (
-                            <div key={boss.id} className="boss-card">
-                                <div className="boss-header">
-                                    <span className="boss-name">{boss.name}</span>
-                                    <span className={`boss-attribute attribute-${boss.attribute}`}>
-                                        {boss.attribute}
-                                    </span>
-                                </div>
-                                <div>
-                                    HP: {remainingHp.toLocaleString()} / {boss.hp.toLocaleString()}
-                                </div>
-                                <div className="hp-bar">
-                                    <div className="hp-fill" style={{width: `${hpPercent}%`}}></div>
-                                </div>
-                                {boss.mechanic && (
-                                    <div style={{marginTop: '10px', fontSize: '12px', color: '#666'}}>
-                                        기믹: {boss.mechanic}
+                        if (currentLevel === 999) {
+                            return (
+                                <React.Fragment key={boss.id}>
+                                    <div 
+                                        className="boss-card"
+                                        onClick={() => toggleBossDetails(boss.id)}
+                                        style={{cursor: 'pointer'}}
+                                    >
+                                        <div className="boss-header">
+                                            <span className="boss-name">{boss.name}</span>
+                                            <span className={`boss-attribute attribute-${boss.attribute}`}>
+                                                {boss.attribute}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            누적 대미지: {totalDamage.toLocaleString()}
+                                        </div>
+                                        {boss.mechanic && (
+                                            <div style={{marginTop: '10px', fontSize: '12px', color: '#666'}}>
+                                                기믹: {boss.mechanic}
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                        );
-                    }
-                })}
-            </div>
-        );
-    };
+                                    {expandedBossId === boss.id && bossBattles.length > 0 && (
+                                        <div style={{
+                                            background: '#f8f9fa',
+                                            padding: '15px',
+                                            marginTop: '-2px',
+                                            marginBottom: '15px',
+                                            borderRadius: '0 0 10px 10px',
+                                            border: '2px solid #e0e0e0',
+                                            borderTop: 'none'
+                                        }}>
+                                            <strong>참여 멤버 ({bossBattles.length}명):</strong>
+                                            {bossBattles.map(battle => (
+                                                <div key={battle.id} style={{marginTop: '5px'}}>
+                                                    • {battle.member_name}: {parseInt(battle.damage).toLocaleString()} 
+                                                    <span style={{fontSize: '12px', color: '#666'}}> - {battle.deck_composition}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </React.Fragment>
+                            );
+                        } else {
+                            const remainingHp = Math.max(0, boss.hp - totalDamage);
+                            const hpPercent = (remainingHp / boss.hp) * 100;
+                            
+                            return (
+                                <React.Fragment key={boss.id}>
+                                    <div 
+                                        className="boss-card"
+                                        onClick={() => toggleBossDetails(boss.id)}
+                                        style={{cursor: 'pointer'}}
+                                    >
+                                        <div className="boss-header">
+                                            <span className="boss-name">{boss.name}</span>
+                                            <span className={`boss-attribute attribute-${boss.attribute}`}>
+                                                {boss.attribute}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            HP: {remainingHp.toLocaleString()} / {boss.hp.toLocaleString()}
+                                        </div>
+                                        <div className="hp-bar">
+                                            <div className="hp-fill" style={{width: `${hpPercent}%`}}></div>
+                                        </div>
+                                        {boss.mechanic && (
+                                            <div style={{marginTop: '10px', fontSize: '12px', color: '#666'}}>
+                                                기믹: {boss.mechanic}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {expandedBossId === boss.id && bossBattles.length > 0 && (
+                                        <div style={{
+                                            background: '#f8f9fa',
+                                            padding: '15px',
+                                            marginTop: '-2px',
+                                            marginBottom: '15px',
+                                            borderRadius: '0 0 10px 10px',
+                                            border: '2px solid #e0e0e0',
+                                            borderTop: 'none'
+                                        }}>
+                                            <strong>참여 멤버 ({bossBattles.length}명):</strong>
+                                            {bossBattles.map(battle => (
+                                                <div key={battle.id} style={{marginTop: '5px'}}>
+                                                    • {battle.member_name}: {parseInt(battle.damage).toLocaleString()} 
+                                                    <span style={{fontSize: '12px', color: '#666'}}> - {battle.deck_composition}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </React.Fragment>
+                            );
+                        }
+                    })}
+                </div>
+            );
+        };
 
     // 모의전 입력 컴포넌트 - Uncontrolled로 변경!
     const MockBattle = () => {
