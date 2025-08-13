@@ -7,7 +7,8 @@ export default async function handler(req, res) {
     switch (method) {
         case 'POST': {
             const { name, date, copyFromSeason, unionId } = req.body;
-            
+            console.log('Received:', { name, date, copyFromSeason, unionId });
+            console.log('unionId type:', typeof unionId);
             if (!unionId) {
                 return res.status(400).json({ error: 'Union ID is required' });
             }
@@ -17,15 +18,18 @@ export default async function handler(req, res) {
                 const { data: newSeason, error: seasonError } = await supabase
                     .from('seasons')
                     .insert([{ 
-                        union_id: unionId,
+                        union_id: parseInt(unionId),
                         name, 
                         date, 
                         is_active: false 
                     }])
                     .select()
                     .single();
-                
-                if (seasonError) throw seasonError;
+
+                if (seasonError) {
+                    console.error('Season insert error:', seasonError);
+                    throw seasonError;
+                }
                 
                 // 이전 시즌에서 멤버 복사
                 if (copyFromSeason) {
