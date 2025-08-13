@@ -132,7 +132,7 @@ export default function Home() {
                 const data = await res.json();
                 console.log('받아온 시즌 데이터:', data.seasons);
                 setSeasons(data.seasons || []);
-                console.log('seasons state 업데이트 후:', seasons);
+                console.log('seasons state 업데이트 후:', data.seasons);
                 // 활성 시즌 찾기
                 const activeSeason = (data.seasons || []).find(s => s.is_active);
                 if (activeSeason) {
@@ -1854,7 +1854,6 @@ export default function Home() {
 
     // 시즌 설정 - Uncontrolled로 변경!
     const SeasonSettings = () => {
-        console.log('SeasonSettings 렌더링, seasons 개수:', seasons.length);
         // useRef로 변경
         const nameRef = useRef();
         const dateRef = useRef();
