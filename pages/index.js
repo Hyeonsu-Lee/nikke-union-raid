@@ -26,6 +26,7 @@ export default function Home() {
     const [lastSync, setLastSync] = useState(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [memberSchedules, setMemberSchedules] = useState([]);
+    const [cooldownProgress, setCooldownProgress] = useState(100);
     
     // 초기 데이터 로드
     // 로그인 체크
@@ -100,15 +101,24 @@ export default function Home() {
 
     // loadData 래퍼 함수
     const handleRefresh = async () => {
-        if (isRefreshing || !unionInfo?.unionId) return;  // 이미 갱신 중이면 무시
+        if (isRefreshing || !unionInfo?.unionId) return;
         
         setIsRefreshing(true);
+        setCooldownProgress(0);  // 프로그레스 시작
+        
         await loadData();
         
-        // 3초 후에 다시 활성화
-        setTimeout(() => {
-            setIsRefreshing(false);
-        }, 3000);
+        // 3초 동안 프로그레스 증가
+        const interval = setInterval(() => {
+            setCooldownProgress(prev => {
+                if (prev >= 100) {
+                    clearInterval(interval);
+                    setIsRefreshing(false);
+                    return 100;
+                }
+                return prev + 3.33;  // 100/30 = 3.33 (100ms마다 3.33% 증가)
+            });
+        }, 100);
     };
 
     const formatNumberInput = (e) => {
@@ -2993,11 +3003,34 @@ export default function Home() {
                             onClick={handleRefresh}
                             disabled={isRefreshing}
                             style={{
-                                opacity: isRefreshing ? 0.5 : 1,
+                                position: 'relative',
+                                opacity: isRefreshing ? 0.8 : 1,
                                 cursor: isRefreshing ? 'not-allowed' : 'pointer'
                             }}
                         >
-                            {isRefreshing ? '⏳ 갱신중...' : '🔄 갱신'}
+                            {isRefreshing && (
+                                <svg style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    transform: 'rotate(-90deg)'
+                                }}>
+                                    <rect
+                                        x="0"
+                                        y="0"
+                                        width="100%"
+                                        height="100%"
+                                        fill="none"
+                                        stroke="#667eea"
+                                        strokeWidth="2"
+                                        strokeDasharray={`${cooldownProgress * 4} 400`}
+                                        opacity="0.3"
+                                    />
+                                </svg>
+                            )}
+                            <span>{isRefreshing ? '⏳ 대기중...' : '🔄 갱신'}</span>
                         </button>
                         <button 
                             className="btn btn-danger"
