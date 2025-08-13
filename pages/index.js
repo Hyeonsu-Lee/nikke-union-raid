@@ -280,7 +280,7 @@ export default function Home() {
             if (res.ok) {
                 await Promise.all([
                     endpoint === 'seasons' 
-                        ? loadData()  // 시즌이면 전체 조회 (시즌 목록 포함)
+                        ? loadData(unionInfo?.unionId)  // 시즌이면 전체 조회 (시즌 목록 포함)
                         : currentSeason 
                             ? loadSeasonData(currentSeason.id) 
                             : Promise.resolve(),
@@ -317,7 +317,7 @@ export default function Home() {
                 }
                 await Promise.all([
                     endpoint === 'seasons'
-                        ? loadData()  // 시즌이면 전체 조회 (시즌 목록 포함)
+                        ? loadData(unionInfo?.unionId)  // 시즌이면 전체 조회 (시즌 목록 포함)
                         : currentSeason 
                             ? loadSeasonData(currentSeason.id) 
                             : Promise.resolve(),
