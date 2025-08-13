@@ -97,6 +97,7 @@ export default function Home() {
         setMockBattles([]);
         setRaidBattles([]);
         setCurrentSeason(null);
+        setLastSync(null);
     };
 
     // loadData 래퍼 함수
