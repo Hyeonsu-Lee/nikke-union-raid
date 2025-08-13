@@ -1387,7 +1387,14 @@ export default function Home() {
                                 transform: 'translateX(-50%)',
                                 zIndex: 10
                             }}>
-                                <div style={{fontSize: '14px', marginBottom: '3px'}}>▼</div>
+                                <div style={{
+                                    fontSize: '14px', 
+                                    marginBottom: '3px',
+                                    textAlign: 'center',
+                                    lineHeight: '1'
+                                }}>
+                                    ▼
+                                </div>
                                 <div style={{
                                     width: '2px',
                                     height: '15px',
@@ -1401,7 +1408,10 @@ export default function Home() {
                                     borderRadius: '12px',
                                     fontSize: '11px',
                                     whiteSpace: 'nowrap',
-                                    marginTop: '5px'
+                                    marginTop: '5px',
+                                    transform: 'translateX(-50%)',
+                                    position: 'relative',
+                                    left: '50%'
                                 }}>
                                     현재 시간 ({currentTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})
                                 </div>
