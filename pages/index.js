@@ -1865,22 +1865,36 @@ export default function Home() {
         };
         
         const activateSeason = async (seasonId) => {
-            // 초기화 필요!
-            setLastSync(null);
-            setMembers([]);
-            setBosses([]);
-            setMockBattles([]);
-            setRaidBattles([]);
-            setMemberSchedules([]);
             await saveData('seasons', {
                 id: seasonId,
                 isActive: true,
                 unionId: unionInfo.unionId
             }, 'PUT');
             
-            // 시즌 변경 후 해당 시즌 데이터 로드
-            setCurrentSeason(seasons.find(s => s.id === seasonId));
-            await loadSeasonData(seasonId);
+
+
+            // 2. 상태 초기화 (중요!)
+            setLastSync(null);  // ← 추가
+            setMembers([]);     // ← 추가
+            setBosses([]);      // ← 추가
+            setMockBattles([]); // ← 추가
+            setRaidBattles([]); // ← 추가
+            setMemberSchedules([]); // ← 추가
+            
+            // 3. seasons 배열 업데이트
+            setSeasons(prev => prev.map(s => ({
+                ...s,
+                is_active: s.id === seasonId
+            })));
+            
+            // 4. 새 시즌 설정
+            const newSeason = seasons.find(s => s.id === seasonId);
+            setCurrentSeason(newSeason);
+            
+            // 5. 새 시즌 데이터 로드 (lastSync=null이므로 전체 조회)
+            if (newSeason) {
+                await loadSeasonData(seasonId);
+            }
         };
         
         return (
