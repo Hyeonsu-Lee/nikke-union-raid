@@ -1089,12 +1089,14 @@ export default function Home() {
         };
         
         const handleMemberKeyDown = (e) => {
+            console.log('Key pressed:', e.key);
             if (e.key === 'ArrowDown') {
                 if (showSuggestions && memberSuggestions.length > 0) {
                     e.preventDefault();
-                    setSelectedIndex(prev => 
-                        prev < memberSuggestions.length - 1 ? prev + 1 : 0
-                    );
+                    setSelectedIndex(prev => {
+                        console.log('Previous index:', prev);  // 추가
+                        return prev < memberSuggestions.length - 1 ? prev + 1 : 0;
+                    });
                 }
             } else if (e.key === 'ArrowUp') {
                 if (showSuggestions && memberSuggestions.length > 0) {
