@@ -19,7 +19,6 @@ export default async function handler(req, res) {
                     .from('members')
                     .select('*')
                     .eq('season_id', seasonId)
-                    .is('deleted_at', null);  // 삭제되지 않은 것만
                 
                 res.status(200).json(updated || []);
             } catch (error) {
@@ -29,13 +28,10 @@ export default async function handler(req, res) {
             
         case 'DELETE':
             try {
-                // Soft Delete로 변경 - deleted_at 필드 업데이트
+                // ★ 변경: Hard Delete - 실제로 레코드 삭제
                 const { error } = await supabase
                     .from('members')
-                    .update({ 
-                        deleted_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()  // updated_at도 갱신
-                    })
+                    .delete()
                     .eq('id', req.query.id);
                 
                 if (error) throw error;

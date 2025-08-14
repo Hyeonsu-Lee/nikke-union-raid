@@ -53,12 +53,10 @@ export default async function handler(req, res) {
             
             try {
                 // Soft Delete
+                // ★ 변경: Hard Delete - 실제로 레코드 삭제
                 const { error } = await supabase
                     .from('member_schedules')
-                    .update({ 
-                        deleted_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                    })
+                    .delete()
                     .eq('id', id);
                 
                 if (error) throw error;

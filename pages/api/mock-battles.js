@@ -33,12 +33,10 @@ export default async function handler(req, res) {
         case 'DELETE':
             try {
                 // Soft Delete - deleted_at 업데이트
+                // ★ 변경: Hard Delete - 실제로 레코드 삭제
                 const { error } = await supabase
                     .from('mock_battles')
-                    .update({ 
-                        deleted_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                    })
+                    .delete()
                     .eq('id', req.query.id);
                 
                 if (error) throw error;
