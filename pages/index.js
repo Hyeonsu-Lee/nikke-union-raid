@@ -1090,13 +1090,19 @@ export default function Home() {
         
         const handleMemberKeyDown = (e) => {
             console.log('Key pressed:', e.key);
+            console.log('showSuggestions before:', showSuggestions);
             if (e.key === 'ArrowDown') {
+                console.log('Arrow Down detected');
                 if (showSuggestions && memberSuggestions.length > 0) {
                     e.preventDefault();
+                    e.stopPropagation();
                     setSelectedIndex(prev => {
-                        console.log('Previous index:', prev);  // 추가
-                        return prev < memberSuggestions.length - 1 ? prev + 1 : 0;
+                        console.log('Previous index:', prev);
+                        const newIndex = prev < memberSuggestions.length - 1 ? prev + 1 : 0;
+                        console.log('New index:', newIndex);  // 추가
+                        return newIndex;
                     });
+                    console.log('showSuggestions after:', showSuggestions);
                 }
             } else if (e.key === 'ArrowUp') {
                 if (showSuggestions && memberSuggestions.length > 0) {
