@@ -2195,6 +2195,17 @@ export default function Home() {
             if (currentSeason && formRef.current) {
                 const seasonBosses = bosses.filter(b => b.season_id === currentSeason.id);
                 if (seasonBosses.length > 0) {
+                    // 보스 순서 복원 (order 필드가 있으면 사용)
+                    const hasOrder = seasonBosses.some(b => b.order !== undefined);
+                    if (hasOrder) {
+                        const sortedAttributes = [...ATTRIBUTES].sort((a, b) => {
+                            const bossA = seasonBosses.find(boss => boss.attribute === a && boss.level === 1);
+                            const bossB = seasonBosses.find(boss => boss.attribute === b && boss.level === 1);
+                            return (bossA?.order || 0) - (bossB?.order || 0);
+                        });
+                        setBossOrder(sortedAttributes);
+                    }
+
                     seasonBosses.forEach(boss => {
                         const idx = ATTRIBUTES.indexOf(boss.attribute);
                         if (idx !== -1) {
@@ -2257,7 +2268,8 @@ export default function Home() {
                 return;
             }
             
-            ATTRIBUTES.forEach((attr, idx) => {
+            bossOrder.forEach((attr, orderIndex) => {  // bossOrder 순서 사용
+                const idx = ATTRIBUTES.indexOf(attr);  // 원래 인덱스로 input 찾기
                 const name = formData.get(`boss-name-${idx}`);
                 const mechanic = formData.get(`boss-mechanic-${idx}`);
                 
@@ -2282,7 +2294,8 @@ export default function Home() {
                             attribute: attr,
                             level: level,
                             hp: parseInt(hp),
-                            mechanic
+                            mechanic,
+                            order: orderIndex
                         });
                     }
                 });
@@ -2292,7 +2305,8 @@ export default function Home() {
                     attribute: attr,
                     level: 999,
                     hp: 0,
-                    mechanic
+                    mechanic,
+                    order: orderIndex
                 });
             });
             
@@ -2315,62 +2329,109 @@ export default function Home() {
                     </div>
                 ) : (
                     <form ref={formRef} onSubmit={handleSubmit}>
-                        <h3 style={{marginBottom: '15px'}}>보스 이름 설정</h3>
-                        <div className="boss-input-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px'}}>
-                            {ATTRIBUTES.map((attr, idx) => (
-                                <div key={attr} className="boss-input-card" style={{background: '#f8f9fa', padding: '15px', borderRadius: '8px'}}>
-                                    <h4 className={`attribute-${attr}`} style={{padding: '5px', borderRadius: '5px', textAlign: 'center', marginBottom: '10px'}}>
-                                        {attr}
-                                    </h4>
-                                    <input
-                                        name={`boss-name-${idx}`}
-                                        type="text"
-                                        className="form-control"
-                                        placeholder="보스 이름"
-                                    />
+                        <h3 style={{marginBottom: '15px'}}>보스 설정</h3>
+                        <DndContext 
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext 
+                                items={bossOrder}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '15px'}}>
+                                    {bossOrder.map((attr) => {
+                                        const idx = ATTRIBUTES.indexOf(attr);
+                                        return (
+                                            <SortableItem key={attr} id={attr}>
+                                                <div style={{
+                                                    background: '#f8f9fa', 
+                                                    padding: '15px', 
+                                                    borderRadius: '10px',
+                                                    cursor: 'move',
+                                                    border: '2px solid #e0e0e0',
+                                                    transition: 'all 0.3s'
+                                                }}>
+                                                    <h4 className={`attribute-${attr}`} style={{
+                                                        padding: '8px', 
+                                                        borderRadius: '5px', 
+                                                        textAlign: 'center', 
+                                                        marginBottom: '15px',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        {attr}
+                                                    </h4>
+                                                    
+                                                    <div style={{marginBottom: '10px'}}>
+                                                        <label style={{fontSize: '12px', marginBottom: '5px', display: 'block'}}>
+                                                            보스 이름
+                                                        </label>
+                                                        <input
+                                                            name={`boss-name-${idx}`}
+                                                            type="text"
+                                                            className="form-control"
+                                                            placeholder="보스 이름 입력"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div style={{marginBottom: '10px'}}>
+                                                        <label style={{fontSize: '12px', marginBottom: '5px', display: 'block'}}>
+                                                            레벨 1 HP
+                                                        </label>
+                                                        <input
+                                                            name={`boss-hp-1-${idx}`}
+                                                            type="text"
+                                                            className="form-control"
+                                                            onBlur={formatNumberInput}
+                                                            placeholder="HP 입력"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div style={{marginBottom: '10px'}}>
+                                                        <label style={{fontSize: '12px', marginBottom: '5px', display: 'block'}}>
+                                                            레벨 2 HP
+                                                        </label>
+                                                        <input
+                                                            name={`boss-hp-2-${idx}`}
+                                                            type="text"
+                                                            className="form-control"
+                                                            onBlur={formatNumberInput}
+                                                            placeholder="HP 입력"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div style={{marginBottom: '10px'}}>
+                                                        <label style={{fontSize: '12px', marginBottom: '5px', display: 'block'}}>
+                                                            레벨 3 HP
+                                                        </label>
+                                                        <input
+                                                            name={`boss-hp-3-${idx}`}
+                                                            type="text"
+                                                            className="form-control"
+                                                            onBlur={formatNumberInput}
+                                                            placeholder="HP 입력"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label style={{fontSize: '12px', marginBottom: '5px', display: 'block'}}>
+                                                            보스 기믹
+                                                        </label>
+                                                        <textarea
+                                                            name={`boss-mechanic-${idx}`}
+                                                            className="form-control"
+                                                            rows="3"
+                                                            placeholder="기믹 설명 (선택)"
+                                                            style={{fontSize: '12px'}}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </SortableItem>
+                                        );
+                                    })}
                                 </div>
-                            ))}
-                        </div>
-                        
-                        <h3 style={{marginTop: '30px', marginBottom: '15px'}}>레벨별 HP 설정</h3>
-                        {[1, 2, 3].map(level => (
-                            <div key={level} style={{marginBottom: '20px'}}>
-                                <h4 style={{marginBottom: '10px', color: '#666'}}>레벨 {level}</h4>
-                                <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px'}}>
-                                    {ATTRIBUTES.map((attr, idx) => (
-                                        <div key={attr}>
-                                            <label style={{fontSize: '12px', marginBottom: '5px', display: 'block'}}>
-                                                {attr} HP
-                                            </label>
-                                            <input
-                                                name={`boss-hp-${level}-${idx}`}
-                                                type="text"
-                                                className="form-control"
-                                                onBlur={formatNumberInput}
-                                                placeholder="HP 입력"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                        
-                        <h3 style={{marginTop: '30px', marginBottom: '15px'}}>보스 기믹 (선택)</h3>
-                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px'}}>
-                            {ATTRIBUTES.map((attr, idx) => (
-                                <div key={attr}>
-                                    <label style={{fontSize: '12px', marginBottom: '5px', display: 'block'}}>
-                                        {attr} 기믹
-                                    </label>
-                                    <textarea
-                                        name={`boss-mechanic-${idx}`}
-                                        className="form-control"
-                                        rows="3"
-                                        placeholder="기믹 설명"
-                                    />
-                                </div>
-                            ))}
-                        </div>
+                            </SortableContext>
+                        </DndContext>
                         
                         <button type="submit" className="btn btn-primary" style={{marginTop: '20px'}}>
                             보스 정보 일괄 저장
