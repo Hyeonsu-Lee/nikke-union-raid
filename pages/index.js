@@ -357,6 +357,24 @@ export default function Home() {
             
             if (res.ok) {
                 showMessage('삭제되었습니다.', 'success');
+                // 시즌 삭제 시 수동으로 state 업데이트
+                if (endpoint === 'seasons') {
+                    // 1. 시즌 목록에서 제거
+                    setSeasons(prev => prev.filter(s => s.id !== id));
+                    
+                    // 2. 삭제한 시즌이 현재 보고 있는 시즌이면
+                    if (currentSeason?.id === id) {
+                        setCurrentSeason(null);
+                        localStorage.removeItem('current-season-id');
+                        
+                        // 3. 관련 데이터 모두 초기화
+                        setBosses([]);
+                        setMembers([]);
+                        setMemberSchedules([]);
+                        setMockBattles([]);
+                        setRaidBattles([]);
+                    }
+                }
             }
         } catch (error) {
             showMessage('삭제 실패: ' + error.message, 'error');
