@@ -25,6 +25,7 @@ export default function Home() {
     const [loading, setLoading] = useState(true);
     const [messages, setMessages] = useState([]);
     const [memberSchedules, setMemberSchedules] = useState([]);
+    const [selectedIndex, setSelectedIndex] = useState(-1);
     
     // Realtime 채널 ref
     const channelRef = useRef(null);
@@ -746,6 +747,7 @@ export default function Home() {
 
         const handleMemberInput = () => {
             const value = memberNameRef.current.value;
+            setSelectedIndex(-1);
             
             if (value.length > 0) {
                 const filtered = seasonMembers.filter(m => 
@@ -758,9 +760,41 @@ export default function Home() {
             }
         };
 
+        const handleMemberKeyDown = (e) => {
+            if (e.key === 'ArrowDown' && showSuggestions) {
+                e.preventDefault();
+                setSelectedIndex(prev => 
+                    prev < memberSuggestions.length - 1 ? prev + 1 : 0
+                );
+            } else if (e.key === 'ArrowUp' && showSuggestions) {
+                e.preventDefault();
+                setSelectedIndex(prev => prev > 0 ? prev - 1 : memberSuggestions.length - 1);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                
+                if (showSuggestions && selectedIndex >= 0) {
+                    // 리스트에서 선택
+                    selectMember(memberSuggestions[selectedIndex].name);
+                    setSelectedIndex(-1);
+                } else {
+                    // 직접 입력 완료
+                    const value = memberNameRef.current.value;
+                    if (seasonMembers.some(m => m.name === value)) {
+                        setShowSuggestions(false);
+                        bossIdRef.current?.focus();
+                    }
+                }
+            } else if (e.key === 'Escape') {
+                setShowSuggestions(false);
+                setSelectedIndex(-1);
+            }
+        };
+
         const selectMember = (memberName) => {
             memberNameRef.current.value = memberName;
             setShowSuggestions(false);
+            setSelectedIndex(-1);
+            bossIdRef.current?.focus();
         };
         
         const handleSubmit = async (e) => {
@@ -831,7 +865,8 @@ export default function Home() {
                                 type="text"
                                 className="form-control"
                                 onInput={handleMemberInput}
-                                onFocus={() => memberNameRef.current.value && setShowSuggestions(true)}
+                                onKeyDown={handleMemberKeyDown}
+                                onFocus={() => memberNameRef.current.value && handleMemberInput()}
                                 placeholder="닉네임 입력 또는 선택"
                             />
                             {showSuggestions && memberSuggestions.length > 0 && (
@@ -1031,6 +1066,7 @@ export default function Home() {
         
         const handleMemberInput = () => {
             const value = memberNameRef.current.value;
+            setSelectedIndex(-1);
             
             if (value.length > 0) {
                 const filtered = seasonMembers.filter(m => 
@@ -1043,9 +1079,41 @@ export default function Home() {
             }
         };
         
+        const handleMemberKeyDown = (e) => {
+            if (e.key === 'ArrowDown' && showSuggestions) {
+                e.preventDefault();
+                setSelectedIndex(prev => 
+                    prev < memberSuggestions.length - 1 ? prev + 1 : 0
+                );
+            } else if (e.key === 'ArrowUp' && showSuggestions) {
+                e.preventDefault();
+                setSelectedIndex(prev => prev > 0 ? prev - 1 : memberSuggestions.length - 1);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                
+                if (showSuggestions && selectedIndex >= 0) {
+                    // 리스트에서 선택
+                    selectMember(memberSuggestions[selectedIndex].name);
+                    setSelectedIndex(-1);
+                } else {
+                    // 직접 입력 완료
+                    const value = memberNameRef.current.value;
+                    if (seasonMembers.some(m => m.name === value)) {
+                        setShowSuggestions(false);
+                        bossIdRef.current?.focus();
+                    }
+                }
+            } else if (e.key === 'Escape') {
+                setShowSuggestions(false);
+                setSelectedIndex(-1);
+            }
+        };
+
         const selectMember = (memberName) => {
             memberNameRef.current.value = memberName;
             setShowSuggestions(false);
+            setSelectedIndex(-1);
+            bossIdRef.current?.focus();
         };
         
         const handleSubmit = async (e) => {
@@ -1121,7 +1189,8 @@ export default function Home() {
                                 type="text"
                                 className="form-control"
                                 onInput={handleMemberInput}
-                                onFocus={() => memberNameRef.current.value && setShowSuggestions(true)}
+                                onKeyDown={handleMemberKeyDown}
+                                onFocus={() => memberNameRef.current.value && handleMemberInput()}
                                 placeholder="닉네임 입력 또는 선택"
                             />
                             {showSuggestions && memberSuggestions.length > 0 && (
