@@ -893,7 +893,7 @@ export default function Home() {
                                     zIndex: 100,
                                     boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                                 }}>
-                                    {memberSuggestions.map(member => (
+                                    {memberSuggestions.map((member, index) => (
                                         <div
                                             key={member.id}
                                             onClick={() => selectMember(member.name)}
@@ -1236,7 +1236,7 @@ export default function Home() {
                                     zIndex: 100,
                                     boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                                 }}>
-                                    {memberSuggestions.map(member => (
+                                    {memberSuggestions.map((member, index) => (
                                         <div
                                             key={member.id}
                                             onClick={() => selectMember(member.name)}
