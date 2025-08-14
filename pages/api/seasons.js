@@ -65,48 +65,6 @@ export default async function handler(req, res) {
             break;
         }
             
-        case 'PUT': {
-            const { id, isActive, unionId } = req.body;
-            
-            if (!unionId) {
-                return res.status(400).json({ error: 'Union ID is required' });
-            }
-            
-            try {
-                // 활성화할 시즌이 해당 union의 시즌인지 확인
-                const { data: targetSeason } = await supabase
-                    .from('seasons')
-                    .select('union_id')
-                    .eq('id', id)
-                    .single();
-                
-                if (!targetSeason || targetSeason.union_id !== unionId) {
-                    return res.status(403).json({ error: 'Unauthorized access' });
-                }
-                
-                if (isActive) {
-                    // 같은 union의 모든 시즌 비활성화
-                    await supabase
-                        .from('seasons')
-                        .update({ is_active: false })
-                        .eq('union_id', unionId);
-                }
-                
-                // 선택한 시즌 활성화
-                const { error } = await supabase
-                    .from('seasons')
-                    .update({ is_active: isActive })
-                    .eq('id', id);
-                
-                if (error) throw error;
-                
-                res.status(200).json({ success: true });
-            } catch (error) {
-                res.status(500).json({ error: error.message });
-            }
-            break;
-        }
-            
         case 'DELETE': {
             const { unionId } = req.body;
             

@@ -1783,8 +1783,6 @@ export default function Home() {
     };
 
     const Settings = () => {
-        const [activeSettingTab, setActiveSettingTab] = useState('season');
-        
         if (!unionInfo?.isAdmin) {
             return (
                 <div style={{
@@ -1977,11 +1975,8 @@ export default function Home() {
                                         <td>{season.name}</td>
                                         <td>{season.date}</td>
                                         <td>{seasonMemberCount}명</td>
-                                        <td>
-                                            {isCurrentSeason ? 
-                                                <span className="member-status status-complete">보는 중</span> : 
-                                                <span className="member-status status-incomplete">-</span>
-                                            }
+                                        <td style={{textAlign: 'center'}}>
+                                            {isCurrentSeason ? '🔵' : '⚪'}
                                         </td>
                                         <td>
                                             {!isCurrentSeason && (
