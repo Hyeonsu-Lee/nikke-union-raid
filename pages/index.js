@@ -133,7 +133,7 @@ export default function Home() {
         switch (table) {
             case 'seasons':
                 if (eventType === 'INSERT') {
-                    setSeasons(prev => [...prev, newRecord]);
+                    setSeasons(prev => [newRecord, ...prev]);
                 } else if (eventType === 'UPDATE') {
                     setSeasons(prev => prev.map(s => s.id === newRecord.id ? newRecord : s));
                 } else if (eventType === 'DELETE') {
@@ -2408,7 +2408,7 @@ export default function Home() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {seasonMembers.map(member => {
+                                    {[...seasonMembers].reverse().map(member => {
                                         const schedule = memberSchedulesMap[member.id];
                                         return (
                                             <tr key={member.id}>
