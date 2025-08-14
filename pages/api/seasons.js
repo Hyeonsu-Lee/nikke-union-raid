@@ -44,7 +44,8 @@ export default async function handler(req, res) {
                         const { data: sourceMembers } = await supabase
                             .from('members')
                             .select('name')
-                            .eq('season_id', copyFromSeason);
+                            .eq('season_id', copyFromSeason)
+                            .is('deleted_at', null);
                         
                         if (sourceMembers && sourceMembers.length > 0) {
                             const newMembers = sourceMembers.map(member => ({
