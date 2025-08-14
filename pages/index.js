@@ -2171,7 +2171,7 @@ export default function Home() {
                     textAlign: 'center',
                     fontSize: '12px'
                 }}>
-                    ⋮⋮⋮ 드래그
+                    ⋮⋮⋮⋮⋮⋮
                 </div>
                 {children}
             </div>
@@ -2306,8 +2306,7 @@ export default function Home() {
                             attribute: attr,
                             level: level,
                             hp: parseInt(hp),
-                            mechanic,
-                            order: orderIndex
+                            mechanic
                         });
                     }
                 });
@@ -2317,8 +2316,7 @@ export default function Home() {
                     attribute: attr,
                     level: 999,
                     hp: 0,
-                    mechanic,
-                    order: orderIndex
+                    mechanic
                 });
             });
             
