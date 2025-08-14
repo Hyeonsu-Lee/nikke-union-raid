@@ -1865,6 +1865,13 @@ export default function Home() {
         };
         
         const activateSeason = async (seasonId) => {
+            // 초기화 필요!
+            setLastSync(null);
+            setMembers([]);
+            setBosses([]);
+            setMockBattles([]);
+            setRaidBattles([]);
+            setMemberSchedules([]);
             await saveData('seasons', {
                 id: seasonId,
                 isActive: true,
@@ -1910,7 +1917,7 @@ export default function Home() {
                         >
                             <option value="">멤버 복사 안함</option>
                             {seasons.map(season => {
-                                const seasonMemberCount = members.filter(m => m.season_id === season.id).length;
+                                const seasonMemberCount = season.member_count || 0;
                                 return (
                                     <option key={season.id} value={season.id}>
                                         {season.name} ({seasonMemberCount}명)

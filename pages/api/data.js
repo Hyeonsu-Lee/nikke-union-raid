@@ -24,6 +24,26 @@ export default async function handler(req, res) {
             
             if (error) throw error;
             
+            // 2. 모든 시즌의 멤버수를 한 번에 조회
+            if (seasons && seasons.length > 0) {
+                const { data: memberCounts } = await supabase
+                    .from('members')
+                    .select('season_id')
+                    .is('deleted_at', null)
+                    .in('season_id', seasons.map(s => s.id));
+                
+                // 3. 시즌별로 집계
+                const countMap = {};
+                memberCounts?.forEach(m => {
+                    countMap[m.season_id] = (countMap[m.season_id] || 0) + 1;
+                });
+                
+                // 4. 각 시즌에 멤버수 추가
+                seasons.forEach(season => {
+                    season.member_count = countMap[season.id] || 0;
+                });
+            }
+
             return res.status(200).json({
                 seasons: seasons || [],
                 timestamp: new Date().toISOString()
