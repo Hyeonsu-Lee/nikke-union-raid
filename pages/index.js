@@ -1167,6 +1167,10 @@ export default function Home() {
             const deck = deckRef.current.value;
             const damage = damageRef.current.value.replace(/,/g, '');
 
+            console.log('=== 실전 입력 디버깅 ===');
+            console.log('선택한 bossId:', bossId);
+            console.log('레벨:', level);
+
             if (!seasonMembers.some(m => m.name === memberName)) {
                 showMessage('등록되지 않은 멤버입니다.', 'error');
                 return;
@@ -1192,7 +1196,10 @@ export default function Home() {
             }
 
             const selectedBoss = bosses.find(b => b.id === parseInt(bossId));
+            console.log('selectedBoss:', selectedBoss);
             const bossOrder = ATTRIBUTES.indexOf(selectedBoss.attribute);
+            console.log('bossOrder (ATTRIBUTES.indexOf):', bossOrder);
+            console.log('selectedBoss.order:', selectedBoss?.order);
             const levelOffset = level === '999' ? 3 : parseInt(level) - 1;
             const actualBossId = (currentSeason.id - 1) * 20 + (bossOrder * 4) + levelOffset + 1;
             console.log('계산된 actualBossId:', actualBossId);
