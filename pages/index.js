@@ -1949,7 +1949,7 @@ export default function Home() {
                         </thead>
                         <tbody>
                             {seasons.map(season => {
-                                const seasonMemberCount = members.filter(m => m.season_id === season.id).length;
+                                const seasonMemberCount = season.member_count || 0;
                                 return (
                                     <tr key={season.id}>
                                         <td>{season.name}</td>
