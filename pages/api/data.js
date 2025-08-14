@@ -49,21 +49,25 @@ export default async function handler(req, res) {
                 supabase.from('members')
                     .select('*')
                     .eq('season_id', seasonId)
+                    .is('deleted_at', null)
                     .order('id', { ascending: true }),
                 
                 supabase.from('member_schedules')
                     .select('*')
                     .eq('season_id', seasonId)
+                    .is('deleted_at', null)
                     .order('id', { ascending: true }),
                 
                 supabase.from('mock_battles')
                     .select('*')
                     .eq('season_id', seasonId)
+                    .is('deleted_at', null)
                     .order('id', { ascending: false }),
                 
                 supabase.from('raid_battles')
                     .select('*')
                     .eq('season_id', seasonId)
+                    .is('deleted_at', null)
                     .order('timestamp', { ascending: false })
             ]);
             
@@ -90,7 +94,11 @@ export default async function handler(req, res) {
                 { data: updatedMembers },
                 { data: updatedSchedules },
                 { data: updatedMockBattles },
-                { data: updatedRaidBattles }
+                { data: updatedRaidBattles },
+                { data: deletedMembers },
+                { data: deletedSchedules },
+                { data: deletedMockBattles },
+                { data: deletedRaidBattles }
             ] = await Promise.all([
                 // updated 조회 (seasonId로만)
                 supabase.from('bosses')
@@ -103,25 +111,58 @@ export default async function handler(req, res) {
                     .select('*')
                     .eq('season_id', seasonId)
                     .gt('updated_at', lastSync)
+                    .is('deleted_at', null)
                     .order('id', { ascending: true }),
                 
                 supabase.from('member_schedules')
                     .select('*')
                     .eq('season_id', seasonId)
                     .gt('updated_at', lastSync)
+                    .is('deleted_at', null)
                     .order('id', { ascending: true }),
                 
                 supabase.from('mock_battles')
                     .select('*')
                     .eq('season_id', seasonId)
                     .gt('updated_at', lastSync)
+                    .is('deleted_at', null)
                     .order('id', { ascending: false }),
                 
                 supabase.from('raid_battles')
                     .select('*')
                     .eq('season_id', seasonId)
                     .gt('updated_at', lastSync)
+                    .is('deleted_at', null)
                     .order('id', { ascending: false }),
+
+                // deleted 조회
+                supabase.from('members')
+                    .select('id')
+                    .eq('season_id', seasonId)
+                    .not('deleted_at', 'is', null)
+                    .gt('deleted_at', lastSync)
+                    .order('id', { ascending: true }),
+                
+                supabase.from('member_schedules')
+                    .select('id')
+                    .eq('season_id', seasonId)
+                    .not('deleted_at', 'is', null)
+                    .gt('deleted_at', lastSync)
+                    .order('id', { ascending: true }),
+                
+                supabase.from('mock_battles')
+                    .select('id')
+                    .eq('season_id', seasonId)
+                    .not('deleted_at', 'is', null)
+                    .gt('deleted_at', lastSync)
+                    .order('id', { ascending: true }),
+                
+                supabase.from('raid_battles')
+                    .select('id')
+                    .eq('season_id', seasonId)
+                    .not('deleted_at', 'is', null)
+                    .gt('deleted_at', lastSync)
+                    .order('id', { ascending: true })
             ]);
             
             return res.status(200).json({
@@ -129,19 +170,19 @@ export default async function handler(req, res) {
                     bosses: { updated: updatedBosses || [] },
                     members: { 
                         updated: updatedMembers || [], 
-                        deleted: []
+                        deleted: deletedMembers ? deletedMembers.map(d => d.id) : []
                     },
                     memberSchedules: {
                         updated: updatedSchedules || [],
-                        deleted: []
+                        deleted: deletedSchedules ? deletedSchedules.map(d => d.id) : []
                     },
                     mockBattles: { 
                         updated: updatedMockBattles || [], 
-                        deleted: []
+                        deleted: deletedMockBattles ? deletedMockBattles.map(d => d.id) : []
                     },
                     raidBattles: { 
                         updated: updatedRaidBattles || [], 
-                        deleted: []
+                        deleted: deletedRaidBattles ? deletedRaidBattles.map(d => d.id) : []
                     }
                 },
                 timestamp: new Date().toISOString()

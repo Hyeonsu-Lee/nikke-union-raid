@@ -37,10 +37,12 @@ export default async function handler(req, res) {
             try {
                 const koreaTime = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
                 // Soft Delete - deleted_at 업데이트
-                // ★ 변경: Hard Delete - 실제로 레코드 삭제
                 const { error } = await supabase
                     .from('raid_battles')
-                    .delete()
+                    .update({ 
+                        deleted_at: koreaTime.toISOString(),
+                        updated_at: koreaTime.toISOString()
+                    })
                     .eq('id', req.query.id);
                 
                 if (error) throw error;
