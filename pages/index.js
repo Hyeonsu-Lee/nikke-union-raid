@@ -1198,7 +1198,7 @@ export default function Home() {
             b.level === (levelRef.current ? parseInt(levelRef.current.value) : 1)
         );
         const seasonRaidBattles = raidBattles.filter(b => b.season_id === currentSeason?.id);
-        
+        console.log('Render - showSuggestions:', showSuggestions, 'selectedIndex:', selectedIndex, 'suggestions:', memberSuggestions.length);
         return (
             <div>
                 <h2>실전 기록 입력</h2>
@@ -1226,6 +1226,7 @@ export default function Home() {
                                 placeholder="닉네임 입력 또는 선택"
                             />
                             {showSuggestions && memberSuggestions.length > 0 && (
+                                console.log('리스트 렌더링 중, selectedIndex:', selectedIndex),
                                 <div style={{
                                     position: 'absolute',
                                     top: '100%',
@@ -1241,6 +1242,7 @@ export default function Home() {
                                     boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                                 }}>
                                     {memberSuggestions.map(member => (
+                                        console.log('멤버:', member.name, 'index:', index, 'selected:', index === selectedIndex),
                                         <div
                                             key={member.id}
                                             onClick={() => selectMember(member.name)}
