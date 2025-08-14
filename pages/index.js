@@ -383,6 +383,8 @@ export default function Home() {
             const seasonBattles = raidBattles.filter(b => b.season_id === currentSeason.id);
             const seasonMembers = members.filter(m => m.season_id === currentSeason.id);
             
+            const totalDamage = seasonBattles.reduce((sum, b) => sum + (parseInt(b.damage) || 0), 0);
+
             const memberStats = seasonMembers.map(member => {
                 const memberBattles = seasonBattles.filter(b => b.member_name === member.name);
                 return {
@@ -406,6 +408,7 @@ export default function Home() {
             const completedMembers = memberStats.filter(m => m.usedDecks === 3).length;
             
             return {
+                totalDamage,
                 totalUsedDecks,
                 totalRemainingDecks,
                 completedMembers,
@@ -435,9 +438,9 @@ export default function Home() {
                 
                 <div className="dashboard-grid">
                     <div className="stat-card">
-                        <h3>사용된 총 덱 수</h3>
+                        <h3>누적 딜량</h3>
                         <div className="stat-value">
-                            {stats?.totalUsedDecks || 0} / {(stats?.totalMembers || 0) * 3}
+                            {(stats?.totalDamage || 0).toLocaleString()}
                         </div>
                     </div>
                     
