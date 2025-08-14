@@ -866,7 +866,16 @@ export default function Home() {
                                 className="form-control"
                                 onInput={handleMemberInput}
                                 onKeyDown={handleMemberKeyDown}
-                                onFocus={() => memberNameRef.current.value && handleMemberInput()}
+                                onFocus={() => {
+                                    // handleMemberInput() 호출하지 말고 직접 처리
+                                    if (memberNameRef.current.value.length > 0) {
+                                        setShowSuggestions(true);
+                                    }
+                                }}
+                                onBlur={() => {
+                                    // 클릭 이벤트가 먼저 실행되도록 딜레이
+                                    setTimeout(() => setShowSuggestions(false), 200);
+                                }}
                                 placeholder="닉네임 입력 또는 선택"
                             />
                             {showSuggestions && memberSuggestions.length > 0 && (
@@ -1080,26 +1089,32 @@ export default function Home() {
         };
         
         const handleMemberKeyDown = (e) => {
-            if (e.key === 'ArrowDown' && showSuggestions) {
-                e.preventDefault();
-                setSelectedIndex(prev => 
-                    prev < memberSuggestions.length - 1 ? prev + 1 : 0
-                );
-            } else if (e.key === 'ArrowUp' && showSuggestions) {
-                e.preventDefault();
-                setSelectedIndex(prev => prev > 0 ? prev - 1 : memberSuggestions.length - 1);
+            if (e.key === 'ArrowDown') {
+                if (showSuggestions && memberSuggestions.length > 0) {
+                    e.preventDefault();
+                    setSelectedIndex(prev => 
+                        prev < memberSuggestions.length - 1 ? prev + 1 : 0
+                    );
+                }
+            } else if (e.key === 'ArrowUp') {
+                if (showSuggestions && memberSuggestions.length > 0) {
+                    e.preventDefault();
+                    setSelectedIndex(prev => 
+                        prev > 0 ? prev - 1 : memberSuggestions.length - 1
+                    );
+                }
             } else if (e.key === 'Enter') {
                 e.preventDefault();
                 
-                if (showSuggestions && selectedIndex >= 0) {
+                if (showSuggestions && selectedIndex >= 0 && memberSuggestions[selectedIndex]) {
                     // 리스트에서 선택
                     selectMember(memberSuggestions[selectedIndex].name);
-                    setSelectedIndex(-1);
                 } else {
                     // 직접 입력 완료
                     const value = memberNameRef.current.value;
                     if (seasonMembers.some(m => m.name === value)) {
                         setShowSuggestions(false);
+                        setSelectedIndex(-1);
                         bossIdRef.current?.focus();
                     }
                 }
@@ -1190,7 +1205,16 @@ export default function Home() {
                                 className="form-control"
                                 onInput={handleMemberInput}
                                 onKeyDown={handleMemberKeyDown}
-                                onFocus={() => memberNameRef.current.value && handleMemberInput()}
+                                onFocus={() => {
+                                    // handleMemberInput() 호출하지 말고 직접 처리
+                                    if (memberNameRef.current.value.length > 0) {
+                                        setShowSuggestions(true);
+                                    }
+                                }}
+                                onBlur={() => {
+                                    // 클릭 이벤트가 먼저 실행되도록 딜레이
+                                    setTimeout(() => setShowSuggestions(false), 200);
+                                }}
                                 placeholder="닉네임 입력 또는 선택"
                             />
                             {showSuggestions && memberSuggestions.length > 0 && (
