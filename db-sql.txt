@@ -9,6 +9,22 @@ DROP TABLE IF EXISTS unions CASCADE;
 DROP TABLE IF EXISTS super_admin CASCADE;
 DROP FUNCTION IF EXISTS update_updated_at_column CASCADE;
 
+-- updated_at 자동 업데이트 함수 (먼저 생성)
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- 슈퍼 관리자 테이블
+CREATE TABLE super_admin (
+  id BIGSERIAL PRIMARY KEY,
+  username VARCHAR(255) DEFAULT 'admin',
+  password VARCHAR(255) NOT NULL
+);
+
 -- 유니온 테이블 (최상위)
 CREATE TABLE unions (
   id BIGSERIAL PRIMARY KEY,
@@ -20,14 +36,7 @@ CREATE TABLE unions (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- 슈퍼 관리자 테이블
-CREATE TABLE super_admin (
-  id BIGSERIAL PRIMARY KEY,
-  username VARCHAR(255) DEFAULT 'admin',
-  password VARCHAR(255) NOT NULL
-);
-
--- 시즌 테이블 (union_id 추가)
+-- 시즌 테이블
 CREATE TABLE seasons (
   id BIGSERIAL PRIMARY KEY,
   union_id BIGINT REFERENCES unions(id) ON DELETE CASCADE,
@@ -71,9 +80,11 @@ CREATE TABLE bosses (
   level INTEGER,
   hp BIGINT,
   mechanic TEXT,
+  "order" SMALLINT DEFAULT 0,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
-  deleted_at TIMESTAMP
+  deleted_at TIMESTAMP,
+  UNIQUE(season_id, attribute, level)
 );
 
 -- 모의전 테이블
@@ -104,16 +115,7 @@ CREATE TABLE raid_battles (
   deleted_at TIMESTAMP
 );
 
--- updated_at 자동 업데이트 함수
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ language 'plpgsql';
-
--- 각 테이블에 트리거 생성
+-- 트리거 생성 (각 테이블별)
 CREATE TRIGGER update_unions_updated_at BEFORE UPDATE ON unions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -140,25 +142,18 @@ CREATE INDEX idx_unions_name ON unions(name);
 CREATE INDEX idx_unions_updated_at ON unions(updated_at);
 CREATE INDEX idx_seasons_union_id ON seasons(union_id);
 CREATE INDEX idx_seasons_updated_at ON seasons(updated_at);
-CREATE INDEX idx_members_updated_at ON members(updated_at);
-CREATE INDEX idx_member_schedules_updated_at ON member_schedules(updated_at);
-CREATE INDEX idx_bosses_updated_at ON bosses(updated_at);
-CREATE INDEX idx_mock_battles_updated_at ON mock_battles(updated_at);
-CREATE INDEX idx_raid_battles_updated_at ON raid_battles(updated_at);
-
 CREATE INDEX idx_members_season_id ON members(season_id);
+CREATE INDEX idx_members_updated_at ON members(updated_at);
 CREATE INDEX idx_member_schedules_member_id ON member_schedules(member_id);
 CREATE INDEX idx_member_schedules_season_id ON member_schedules(season_id);
+CREATE INDEX idx_member_schedules_updated_at ON member_schedules(updated_at);
 CREATE INDEX idx_bosses_season_id ON bosses(season_id);
+CREATE INDEX idx_bosses_order ON bosses("order");
+CREATE INDEX idx_bosses_updated_at ON bosses(updated_at);
 CREATE INDEX idx_mock_battles_season_id ON mock_battles(season_id);
+CREATE INDEX idx_mock_battles_updated_at ON mock_battles(updated_at);
 CREATE INDEX idx_raid_battles_season_id ON raid_battles(season_id);
-
-ALTER TABLE bosses 
-DROP CONSTRAINT IF EXISTS bosses_unique_constraint;
-
-ALTER TABLE bosses 
-ADD CONSTRAINT bosses_unique_constraint 
-UNIQUE (season_id, attribute, level);
+CREATE INDEX idx_raid_battles_updated_at ON raid_battles(updated_at);
 
 -- Realtime 활성화
 ALTER PUBLICATION supabase_realtime ADD TABLE unions;
@@ -169,5 +164,5 @@ ALTER PUBLICATION supabase_realtime ADD TABLE bosses;
 ALTER PUBLICATION supabase_realtime ADD TABLE mock_battles;
 ALTER PUBLICATION supabase_realtime ADD TABLE raid_battles;
 
--- 슈퍼 관리자 초기 데이터 (비밀번호는 나중에 수정)
+-- 슈퍼 관리자 초기 데이터
 INSERT INTO super_admin (password) VALUES ('admin');

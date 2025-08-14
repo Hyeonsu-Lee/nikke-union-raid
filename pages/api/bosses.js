@@ -11,7 +11,8 @@ export default async function handler(req, res) {
             try {
                 const bossesWithSeasonId = bossData.map(boss => ({
                     ...boss,
-                    season_id: seasonId
+                    season_id: seasonId,
+                    order: boss.order
                 }));
                 
                 // upsert: 있으면 UPDATE, 없으면 INSERT

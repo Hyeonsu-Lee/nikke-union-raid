@@ -615,7 +615,8 @@ export default function Home() {
         
         const levelBosses = bosses.filter(b => 
             b.season_id === currentSeason?.id && b.level === currentLevel
-        );
+                )
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
         
         return (
             <div>
@@ -853,7 +854,9 @@ export default function Home() {
             });
         };
         
-        const seasonBosses = bosses.filter(b => b.season_id === currentSeason?.id && b.level === 1);
+        const seasonBosses = bosses
+            .filter(b => b.season_id === currentSeason?.id && b.level === 1)
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
         const seasonMockBattles = mockBattles.filter(b => b.season_id === currentSeason?.id);
         
         const filteredMockBattles = useMemo(() => {
@@ -1304,7 +1307,9 @@ export default function Home() {
                                 {bosses.filter(b => 
                                     b.season_id === currentSeason?.id && 
                                     b.level === (levelRef.current ? parseInt(levelRef.current.value) : 1)
-                                ).map(boss => (
+                                )
+                                .sort((a, b) => (a.order || 0) - (b.order || 0))
+                                .map(boss => (
                                     <option key={boss.id} value={boss.id}>
                                         {boss.name} ({boss.attribute})
                                     </option>
@@ -2210,12 +2215,10 @@ export default function Home() {
                     // 보스 순서 복원 (order 필드가 있으면 사용)
                     const hasOrder = seasonBosses.some(b => b.order !== undefined);
                     if (hasOrder) {
-                        const sortedAttributes = [...ATTRIBUTES].sort((a, b) => {
-                            const bossA = seasonBosses.find(boss => boss.attribute === a && boss.level === 1);
-                            const bossB = seasonBosses.find(boss => boss.attribute === b && boss.level === 1);
-                            return (bossA?.order || 0) - (bossB?.order || 0);
-                        });
-                        setBossOrder(sortedAttributes);
+                        const level1Bosses = seasonBosses
+                            .filter(b => b.level === 1)
+                            .sort((a, b) => (a.order || 0) - (b.order || 0));
+                        setBossOrder(level1Bosses.map(b => b.attribute));
                     }
 
                     seasonBosses.forEach(boss => {
@@ -2306,7 +2309,8 @@ export default function Home() {
                             attribute: attr,
                             level: level,
                             hp: parseInt(hp),
-                            mechanic
+                            mechanic,
+                            order: orderIndex
                         });
                     }
                 });
@@ -2316,7 +2320,8 @@ export default function Home() {
                     attribute: attr,
                     level: 999,
                     hp: 0,
-                    mechanic
+                    mechanic,
+                    order: orderIndex
                 });
             });
             
@@ -2466,7 +2471,7 @@ export default function Home() {
                                 .filter(b => b.season_id === currentSeason?.id)
                                 .sort((a, b) => {
                                     if (a.level !== b.level) return a.level - b.level;
-                                    return ATTRIBUTES.indexOf(a.attribute) - ATTRIBUTES.indexOf(b.attribute);
+                                    return (a.order || 0) - (b.order || 0);
                                 })
                                 .map(boss => (
                                     <tr key={boss.id}>
