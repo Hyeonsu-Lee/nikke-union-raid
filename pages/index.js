@@ -1195,7 +1195,7 @@ export default function Home() {
             const bossOrder = ATTRIBUTES.indexOf(selectedBoss.attribute);
             const levelOffset = level === '999' ? 3 : parseInt(level) - 1;
             const actualBossId = (currentSeason.id - 1) * 20 + (bossOrder * 4) + levelOffset + 1;
-            
+            console.log('계산된 actualBossId:', actualBossId);
             memberNameRef.current.value = '';
             bossIdRef.current.value = '';
             deckRef.current.value = '';
