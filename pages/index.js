@@ -2160,7 +2160,19 @@ export default function Home() {
         };
 
         return (
-            <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+            <div ref={setNodeRef} style={style}>
+                {/* 드래그 핸들 분리 */}
+                <div {...attributes} {...listeners} style={{
+                    cursor: 'move',
+                    padding: '5px',
+                    background: '#667eea',
+                    color: 'white',
+                    borderRadius: '5px 5px 0 0',
+                    textAlign: 'center',
+                    fontSize: '12px'
+                }}>
+                    ⋮⋮⋮ 드래그
+                </div>
                 {children}
             </div>
         );
