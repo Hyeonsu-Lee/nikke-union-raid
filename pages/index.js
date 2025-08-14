@@ -1782,6 +1782,93 @@ export default function Home() {
         );
     };
 
+    const Settings = () => {
+        const [activeSettingTab, setActiveSettingTab] = useState('season');
+        
+        if (!unionInfo?.isAdmin) {
+            return (
+                <div style={{
+                    textAlign: 'center',
+                    padding: '40px',
+                    background: '#f8f9fa',
+                    borderRadius: '10px'
+                }}>
+                    <h3 style={{color: '#666'}}>관리자 권한이 필요합니다</h3>
+                    <p style={{marginTop: '10px', color: '#999'}}>
+                        설정 메뉴는 관리자만 사용할 수 있습니다.
+                    </p>
+                </div>
+            );
+        }
+        
+        return (
+            <div>
+                <h2>설정</h2>
+                
+                <div style={{
+                    display: 'flex',
+                    gap: '10px',
+                    marginTop: '20px',
+                    marginBottom: '30px',
+                    borderBottom: '2px solid #e0e0e0',
+                    paddingBottom: '10px'
+                }}>
+                    <button
+                        className={`nav-tab ${activeSettingTab === 'season' ? 'active' : ''}`}
+                        onClick={() => setActiveSettingTab('season')}
+                        style={{
+                            padding: '8px 16px',
+                            background: activeSettingTab === 'season' ? '#667eea' : '#f0f0f0',
+                            color: activeSettingTab === 'season' ? 'white' : '#333',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '14px'
+                        }}
+                    >
+                        시즌 관리
+                    </button>
+                    <button
+                        className={`nav-tab ${activeSettingTab === 'boss' ? 'active' : ''}`}
+                        onClick={() => setActiveSettingTab('boss')}
+                        style={{
+                            padding: '8px 16px',
+                            background: activeSettingTab === 'boss' ? '#667eea' : '#f0f0f0',
+                            color: activeSettingTab === 'boss' ? 'white' : '#333',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '14px'
+                        }}
+                    >
+                        보스 관리
+                    </button>
+                    <button
+                        className={`nav-tab ${activeSettingTab === 'member' ? 'active' : ''}`}
+                        onClick={() => setActiveSettingTab('member')}
+                        style={{
+                            padding: '8px 16px',
+                            background: activeSettingTab === 'member' ? '#667eea' : '#f0f0f0',
+                            color: activeSettingTab === 'member' ? 'white' : '#333',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '14px'
+                        }}
+                    >
+                        멤버 관리
+                    </button>
+                </div>
+                
+                <div>
+                    {activeSettingTab === 'season' && <SeasonSettings />}
+                    {activeSettingTab === 'boss' && <BossSettings />}
+                    {activeSettingTab === 'member' && <MemberSettings />}
+                </div>
+            </div>
+        );
+    };
+
     // 시즌 설정
     const SeasonSettings = () => {
         const nameRef = useRef();
