@@ -25,7 +25,6 @@ export default function Home() {
     const [loading, setLoading] = useState(true);
     const [messages, setMessages] = useState([]);
     const [memberSchedules, setMemberSchedules] = useState([]);
-    const [selectedIndex, setSelectedIndex] = useState(-1);
     
     // Realtime 채널 ref
     const channelRef = useRef(null);
@@ -740,6 +739,7 @@ export default function Home() {
         const [searchDamage, setSearchDamage] = useState('');
         const [memberSuggestions, setMemberSuggestions] = useState([]);
         const [showSuggestions, setShowSuggestions] = useState(false);
+        const [selectedIndex, setSelectedIndex] = useState(-1);
 
         const seasonMembers = useMemo(() => {
             return members.filter(m => m.season_id === currentSeason?.id);
@@ -900,10 +900,11 @@ export default function Home() {
                                             style={{
                                                 padding: '10px',
                                                 cursor: 'pointer',
-                                                borderBottom: '1px solid #f0f0f0'
+                                                borderBottom: '1px solid #f0f0f0',
+                                                background: index === selectedIndex ? '#667eea' : 'white',
+                                                color: index === selectedIndex ? 'white' : 'black'
                                             }}
-                                            onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
-                                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                                            onMouseEnter={() => setSelectedIndex(index)}
                                         >
                                             {member.name}
                                         </div>
@@ -1068,6 +1069,8 @@ export default function Home() {
         
         const [memberSuggestions, setMemberSuggestions] = useState([]);
         const [showSuggestions, setShowSuggestions] = useState(false);
+
+        const [selectedIndex, setSelectedIndex] = useState(-1);
         
         const seasonMembers = useMemo(() => {
             return members.filter(m => m.season_id === currentSeason?.id);
@@ -1089,20 +1092,14 @@ export default function Home() {
         };
         
         const handleMemberKeyDown = (e) => {
-            console.log('Key pressed:', e.key);
-            console.log('showSuggestions before:', showSuggestions);
             if (e.key === 'ArrowDown') {
-                console.log('Arrow Down detected');
                 if (showSuggestions && memberSuggestions.length > 0) {
                     e.preventDefault();
                     e.stopPropagation();
                     setSelectedIndex(prev => {
-                        console.log('Previous index:', prev);
                         const newIndex = prev < memberSuggestions.length - 1 ? prev + 1 : 0;
-                        console.log('New index:', newIndex);  // 추가
                         return newIndex;
                     });
-                    console.log('showSuggestions after:', showSuggestions);
                 }
             } else if (e.key === 'ArrowUp') {
                 if (showSuggestions && memberSuggestions.length > 0) {
@@ -1198,7 +1195,6 @@ export default function Home() {
             b.level === (levelRef.current ? parseInt(levelRef.current.value) : 1)
         );
         const seasonRaidBattles = raidBattles.filter(b => b.season_id === currentSeason?.id);
-        console.log('Render - showSuggestions:', showSuggestions, 'selectedIndex:', selectedIndex, 'suggestions:', memberSuggestions.length);
         return (
             <div>
                 <h2>실전 기록 입력</h2>
@@ -1226,7 +1222,6 @@ export default function Home() {
                                 placeholder="닉네임 입력 또는 선택"
                             />
                             {showSuggestions && memberSuggestions.length > 0 && (
-                                console.log('리스트 렌더링 중, selectedIndex:', selectedIndex),
                                 <div style={{
                                     position: 'absolute',
                                     top: '100%',
@@ -1242,17 +1237,17 @@ export default function Home() {
                                     boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                                 }}>
                                     {memberSuggestions.map(member => (
-                                        console.log('멤버:', member.name, 'index:', index, 'selected:', index === selectedIndex),
                                         <div
                                             key={member.id}
                                             onClick={() => selectMember(member.name)}
                                             style={{
                                                 padding: '10px',
                                                 cursor: 'pointer',
-                                                borderBottom: '1px solid #f0f0f0'
+                                                borderBottom: '1px solid #f0f0f0',
+                                                background: index === selectedIndex ? '#667eea' : 'white',  // 추가
+                                                color: index === selectedIndex ? 'white' : 'black'         // 추가
                                             }}
-                                            onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
-                                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                                            onMouseEnter={() => setSelectedIndex(index)}
                                         >
                                             {member.name}
                                         </div>
