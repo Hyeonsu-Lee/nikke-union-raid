@@ -4,6 +4,25 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+    useSortable,
+} from '@dnd-kit/sortable';
+import {CSS} from '@dnd-kit/utilities';
+
 // 속성 정의
 const ATTRIBUTES = ['풍압', '철갑', '수냉', '작열', '전격'];
 
@@ -2124,9 +2143,54 @@ export default function Home() {
         );
     };
 
+    const SortableItem = ({id, children}) => {
+        const {
+            attributes,
+            listeners,
+            setNodeRef,
+            transform,
+            transition,
+            isDragging,
+        } = useSortable({id});
+
+        const style = {
+            transform: CSS.Transform.toString(transform),
+            transition,
+            opacity: isDragging ? 0.5 : 1,
+        };
+
+        return (
+            <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+                {children}
+            </div>
+        );
+    };
+
     const BossSettings = () => {
         const formRef = useRef();
+        const [bossOrder, setBossOrder] = useState(ATTRIBUTES);
         
+        // 드래그 센서 설정
+        const sensors = useSensors(
+            useSensor(PointerSensor),
+            useSensor(KeyboardSensor, {
+                coordinateGetter: sortableKeyboardCoordinates,
+            })
+        );
+        
+        // 드래그 종료 핸들러
+        const handleDragEnd = (event) => {
+            const {active, over} = event;
+            
+            if (active.id !== over.id) {
+                setBossOrder((items) => {
+                    const oldIndex = items.indexOf(active.id);
+                    const newIndex = items.indexOf(over.id);
+                    return arrayMove(items, oldIndex, newIndex);
+                });
+            }
+        };
+
         useEffect(() => {
             if (currentSeason && formRef.current) {
                 const seasonBosses = bosses.filter(b => b.season_id === currentSeason.id);
