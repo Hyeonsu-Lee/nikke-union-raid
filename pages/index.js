@@ -153,6 +153,9 @@ export default function Home() {
             case 'seasons':
                 if (eventType === 'INSERT') {
                     setSeasons(prev => [{...newRecord, member_count: 0}, ...prev]);
+                    fetch(`/api/data?unionId=${unionInfo.unionId}`)
+                        .then(res => res.json())
+                        .then(data => setSeasons(data.seasons || []));
                 } else if (eventType === 'UPDATE') {
                     setSeasons(prev => prev.map(s => s.id === newRecord.id ? newRecord : s));
                 } else if (eventType === 'DELETE') {
@@ -167,22 +170,10 @@ export default function Home() {
             case 'members':
                 if (eventType === 'INSERT') {
                     setMembers(prev => [...prev, newRecord]);
-                    // 해당 시즌의 member_count 증가
-                    setSeasons(prev => prev.map(season => 
-                        season.id === newRecord.season_id 
-                            ? {...season, member_count: (season.member_count || 0) + 1}
-                            : season
-                    ));
                 } else if (eventType === 'UPDATE') {
                     if (newRecord.deleted_at) {
                         // Soft delete
                         setMembers(prev => prev.filter(m => m.id !== newRecord.id));
-                        // 해당 시즌의 member_count 감소
-                        setSeasons(prev => prev.map(season => 
-                            season.id === newRecord.season_id 
-                                ? {...season, member_count: Math.max(0, (season.member_count || 0) - 1)}
-                                : season
-                        ));
                     } else {
                         setMembers(prev => prev.map(m => m.id === newRecord.id ? newRecord : m));
                     }
@@ -2052,7 +2043,6 @@ export default function Home() {
                 copyFromSeason: copyFromSeasonId,
                 unionId: unionInfo.unionId
             });
-            setSeasons(prev => [...prev]);
         };
         
         // 시즌 선택 (로컬 스토리지 사용)
