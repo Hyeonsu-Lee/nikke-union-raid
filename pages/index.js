@@ -89,7 +89,10 @@ export default function Home() {
                 table: 'members'
             }, (payload) => {
                 // 클라이언트 필터링
-                handleRealtimeUpdate('members', payload);
+                const member = payload.new || payload.old;
+                if (member && currentSeason && member.season_id === currentSeason.id) {
+                    handleRealtimeUpdate('members', payload);
+                }
             })
             .on('postgres_changes', {
                 event: '*',
