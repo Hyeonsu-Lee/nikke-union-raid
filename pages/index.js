@@ -89,10 +89,7 @@ export default function Home() {
                 table: 'members'
             }, (payload) => {
                 // 클라이언트 필터링
-                const member = payload.new || payload.old;
-                if (member && currentSeason && member.season_id === currentSeason.id) {
-                    handleRealtimeUpdate('members', payload);
-                }
+                handleRealtimeUpdate('members', payload);
             })
             .on('postgres_changes', {
                 event: '*',
@@ -152,10 +149,7 @@ export default function Home() {
         switch (table) {
             case 'seasons':
                 if (eventType === 'INSERT') {
-                    setSeasons(prev => [{...newRecord, member_count: 0}, ...prev]);
-                    fetch(`/api/data?unionId=${unionInfo.unionId}`)
-                        .then(res => res.json())
-                        .then(data => setSeasons(data.seasons || []));
+                    setSeasons(prev => [newRecord, ...prev]);
                 } else if (eventType === 'UPDATE') {
                     setSeasons(prev => prev.map(s => s.id === newRecord.id ? newRecord : s));
                 } else if (eventType === 'DELETE') {
