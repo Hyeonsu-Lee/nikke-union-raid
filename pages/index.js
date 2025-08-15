@@ -1213,7 +1213,7 @@ export default function Home() {
                 seasonId: currentSeason.id,
                 memberName: memberName,
                 level: parseInt(level),
-                bossId: actualBossId,
+                bossId: selectedBoss.id,
                 deckComposition: deck,
                 damage: parseInt(damage)
             });
