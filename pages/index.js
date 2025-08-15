@@ -2040,8 +2040,7 @@ export default function Home() {
                 copyFromSeason: copyFromSeasonId,
                 unionId: unionInfo.unionId
             });
-            await loadInitialData(unionInfo.unionId);
-            
+            setSeasons(prev => [...prev]);
         };
         
         // 시즌 선택 (로컬 스토리지 사용)
