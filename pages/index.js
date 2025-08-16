@@ -2145,7 +2145,7 @@ export default function Home() {
                                 <th style={{textAlign: 'left'}}>시즌명</th>
                                 <th style={{textAlign: 'center'}}>레이드 날짜</th>
                                 <th style={{textAlign: 'center'}}>멤버 수</th>
-                                <th style={{textAlign: 'left'}}>액션</th>
+                                <th style={{textAlign: 'center'}}>액션</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2157,14 +2157,26 @@ export default function Home() {
                                         <td style={{textAlign: 'center'}}>{season.date}</td>
                                         <td style={{textAlign: 'center'}}>{season.member_count}명</td>
                                         <td style={{textAlign: 'left'}}>
-                                            <button
-                                                className={isCurrentSeason ? "btn btn-secondary" : "btn btn-primary"}
-                                                onClick={() => !isCurrentSeason && selectSeason(season.id)}
-                                                disabled={isCurrentSeason}
-                                                style={{marginRight: '5px'}}
-                                            >
-                                                {isCurrentSeason ? '현재' : '보기'}
-                                            </button>
+                                            {isCurrentSeason ? (
+                                                <span style={{
+                                                    padding: '10px 20px',
+                                                    background: '#51cf66',  // 녹색 배경
+                                                    color: 'white',
+                                                    borderRadius: '8px',
+                                                    marginRight: '5px',
+                                                    display: 'inline-block'
+                                                }}>
+                                                    선택됨
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    className="btn btn-primary"
+                                                    onClick={() => selectSeason(season.id)}
+                                                    style={{marginRight: '5px'}}
+                                                >
+                                                    보기
+                                                </button>
+                                            )}
                                             <button
                                                 className="btn btn-danger"
                                                 onClick={() => deleteData('seasons', season.id)}
