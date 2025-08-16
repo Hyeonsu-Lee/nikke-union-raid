@@ -42,7 +42,6 @@ CREATE TABLE seasons (
   union_id SMALLINT REFERENCES unions(id) ON DELETE CASCADE,  -- SMALLINT
   name VARCHAR(255) NOT NULL,
   date DATE NOT NULL,
-  is_active BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   deleted_at TIMESTAMP,

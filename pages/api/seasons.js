@@ -20,8 +20,7 @@ export default async function handler(req, res) {
                     .insert([{ 
                         union_id: unionId,
                         name, 
-                        date, 
-                        is_active: false 
+                        date
                     }])
                     .select()
                     .single();
