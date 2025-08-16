@@ -1280,6 +1280,45 @@ export default function Home() {
                 
                 <form onSubmit={handleSubmit} style={{marginTop: '20px'}}>
                     <div className="grid-2">
+                        <div className="form-group">
+                            <label>레벨</label>
+                            <select
+                                ref={levelRef}
+                                className="form-control"
+                                defaultValue={1}
+                                onChange={() => {
+                                    if (bossIdRef.current) {
+                                        bossIdRef.current.value = '';
+                                    }
+                                }}
+                            >
+                                <option value={1}>레벨 1</option>
+                                <option value={2}>레벨 2</option>
+                                <option value={3}>레벨 3</option>
+                                <option value={999}>무한대</option>
+                            </select>
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>보스 선택</label>
+                            <select
+                                ref={bossIdRef}
+                                className="form-control"
+                            >
+                                <option value="">보스 선택</option>
+                                {bosses.filter(b => 
+                                    b.season_id === currentSeason?.id && 
+                                    b.level === (levelRef.current ? parseInt(levelRef.current.value) : 1)
+                                )
+                                .sort((a, b) => (a.order || 0) - (b.order || 0))
+                                .map(boss => (
+                                    <option key={boss.id} value={boss.id}>
+                                        {boss.name} ({boss.attribute})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        
                         <div className="form-group" style={{position: 'relative'}}>
                             <label>멤버 이름</label>
                             <input
@@ -1333,45 +1372,6 @@ export default function Home() {
                                     ))}
                                 </div>
                             )}
-                        </div>
-                        
-                        <div className="form-group">
-                            <label>레벨</label>
-                            <select
-                                ref={levelRef}
-                                className="form-control"
-                                defaultValue={1}
-                                onChange={() => {
-                                    if (bossIdRef.current) {
-                                        bossIdRef.current.value = '';
-                                    }
-                                }}
-                            >
-                                <option value={1}>레벨 1</option>
-                                <option value={2}>레벨 2</option>
-                                <option value={3}>레벨 3</option>
-                                <option value={999}>무한대</option>
-                            </select>
-                        </div>
-                        
-                        <div className="form-group">
-                            <label>보스 선택</label>
-                            <select
-                                ref={bossIdRef}
-                                className="form-control"
-                            >
-                                <option value="">보스 선택</option>
-                                {bosses.filter(b => 
-                                    b.season_id === currentSeason?.id && 
-                                    b.level === (levelRef.current ? parseInt(levelRef.current.value) : 1)
-                                )
-                                .sort((a, b) => (a.order || 0) - (b.order || 0))
-                                .map(boss => (
-                                    <option key={boss.id} value={boss.id}>
-                                        {boss.name} ({boss.attribute})
-                                    </option>
-                                ))}
-                            </select>
                         </div>
                         
                         <div className="form-group">
@@ -2120,7 +2120,7 @@ export default function Home() {
                                 ref={nameRef}
                                 type="text"
                                 className="form-control"
-                                placeholder="예: 2025년 1월 시즌"
+                                placeholder="예: 유니온 레이드 하드 시즌 1"
                                 required
                             />
                         </div>
