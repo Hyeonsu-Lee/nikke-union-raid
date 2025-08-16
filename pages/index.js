@@ -2637,6 +2637,7 @@ export default function Home() {
     // 멤버 설정
     const MemberSettings = () => {
         const memberNameRef = useRef();
+        const memberLevelRef = useRef();
         const [editingSchedule, setEditingSchedule] = useState(null);
         const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
 
@@ -2669,6 +2670,7 @@ export default function Home() {
             }
             
             const memberName = memberNameRef.current.value;
+            const memberLevel = memberLevelRef.current.value;
             
             if (seasonMembers.some(m => m.name === memberName)) {
                 showMessage('이미 존재하는 멤버입니다.', 'error');
@@ -2676,11 +2678,13 @@ export default function Home() {
             }
             
             memberNameRef.current.value = '';
+            memberLevelRef.current.value = '1';
 
             await saveData('members', {
                 seasonId: currentSeason.id,
                 unionId: unionInfo.unionId,
-                name: memberName
+                name: memberName,
+                level: parseInt(memberLevel) 
             });
         };
         
@@ -2788,6 +2792,19 @@ export default function Home() {
                                     required
                                 />
                             </div>
+                            <div className="form-group">
+                                <label>레벨</label>
+                                <input
+                                    ref={memberLevelRef}
+                                    type="number"
+                                    className="form-control"
+                                    placeholder="레벨 입력"
+                                    defaultValue="1"
+                                    min="1"
+                                    max="9999"
+                                    required
+                                />
+                            </div>
                             
                             <button type="submit" className="btn btn-primary">
                                 멤버 추가
@@ -2802,8 +2819,9 @@ export default function Home() {
                                 <thead>
                                     <tr>
                                         <th>멤버 이름</th>
+                                        <th style={{textAlign: 'center'}}>레벨</th>
                                         <th>참여 가능 시간</th>
-                                        <th>액션</th>
+                                        <th style={{textAlign: 'center'}}>액션</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2812,8 +2830,9 @@ export default function Home() {
                                         return (
                                             <tr key={member.id}>
                                                 <td>{member.name}</td>
+                                                <td style={{textAlign: 'center'}}>{member.level || 1}</td>
                                                 <td>{schedule?.time_slots || '미설정'}</td>
-                                                <td>
+                                                <td style={{textAlign: 'center'}}>
                                                     <button
                                                         className="btn btn-primary"
                                                         onClick={() => openScheduleModal(member)}

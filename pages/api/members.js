@@ -6,12 +6,12 @@ export default async function handler(req, res) {
     
     switch (method) {
         case 'POST':
-            const { seasonId, unionId, name } = req.body;
+            const { seasonId, unionId, name, level} = req.body;
 
             try {
                 const { error } = await supabase
                     .from('members')
-                    .insert([{ season_id: seasonId, union_id: unionId, name }]);
+                    .insert([{ season_id: seasonId, union_id: unionId, name, level: level || 1}]);
                 
                 if (error) throw error;
                 
