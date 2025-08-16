@@ -2143,9 +2143,9 @@ export default function Home() {
                         <thead>
                             <tr>
                                 <th>시즌명</th>
-                                <th>레이드 날짜</th>
-                                <th>멤버 수</th>
-                                <th>상태</th>
+                                <th style={{textAlign: 'center'}}>레이드 날짜</th>
+                                <th style={{textAlign: 'center'}}>멤버 수</th>
+                                <th style={{textAlign: 'center'}}>상태</th>
                                 <th>액션</th>
                             </tr>
                         </thead>
@@ -2154,9 +2154,8 @@ export default function Home() {
                                 const isCurrentSeason = currentSeason?.id === season.id;
                                 return (
                                     <tr key={season.id}>
-                                        <td>{season.name}</td>
-                                        <td>{season.date}</td>
-                                        <td>{season.member_count}명</td>
+                                        <td style={{textAlign: 'center'}}>{season.date}</td>
+                                        <td style={{textAlign: 'center'}}>{season.member_count}명</td>
                                         <td style={{textAlign: 'center'}}>
                                             {isCurrentSeason ? '🔵' : '⚪'}
                                         </td>
