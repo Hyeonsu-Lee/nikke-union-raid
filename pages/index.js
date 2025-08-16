@@ -44,6 +44,7 @@ export default function Home() {
     const [loading, setLoading] = useState(true);
     const [messages, setMessages] = useState([]);
     const [memberSchedules, setMemberSchedules] = useState([]);
+    const [deleteConfirm, setDeleteConfirm] = useState({ show: false, season: null });
     
     // Realtime 채널 ref
     const channelRef = useRef(null);
@@ -430,6 +431,21 @@ export default function Home() {
         } catch (error) {
             showMessage('삭제 실패: ' + error.message, 'error');
         }
+    };
+
+    const handleSeasonDelete = (season) => {
+        setDeleteConfirm({ show: true, season });
+    };
+
+    const confirmDelete = async () => {
+        if (deleteConfirm.season) {
+            await deleteData('seasons', deleteConfirm.season.id);
+            setDeleteConfirm({ show: false, season: null });
+        }
+    };
+
+    const cancelDelete = () => {
+        setDeleteConfirm({ show: false, season: null });
     };
     
     const showMessage = (text, type = 'info') => {
@@ -2172,7 +2188,7 @@ export default function Home() {
                                             </button>
                                             <button
                                                 className="btn btn-danger"
-                                                onClick={() => deleteData('seasons', season.id)}
+                                                onClick={() => handleSeasonDelete(season)}
                                             >
                                                 삭제
                                             </button>
@@ -2183,6 +2199,91 @@ export default function Home() {
                         </tbody>
                     </table>
                 </div>
+            {deleteConfirm.show && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 2000
+                }}>
+                    <div style={{
+                        background: 'white',
+                        borderRadius: '15px',
+                        padding: '30px',
+                        maxWidth: '500px',
+                        width: '90%',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
+                    }}>
+                        <h3 style={{
+                            marginBottom: '20px',
+                            color: '#ff6b6b',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px'
+                        }}>
+                            ⚠️ 시즌 삭제 확인
+                        </h3>
+                        
+                        <div style={{marginBottom: '25px'}}>
+                            <p style={{marginBottom: '15px', fontSize: '16px'}}>
+                                <strong>"{deleteConfirm.season?.name}"</strong> 시즌을 삭제하시겠습니까?
+                            </p>
+                            
+                            <div style={{
+                                background: '#fff3cd',
+                                border: '1px solid #ffc107',
+                                borderRadius: '8px',
+                                padding: '15px',
+                                marginBottom: '15px'
+                            }}>
+                                <strong style={{color: '#856404'}}>경고: 다음 데이터가 모두 삭제됩니다</strong>
+                                <ul style={{margin: '10px 0 0 20px', color: '#856404'}}>
+                                    <li>보스 정보 (20개)</li>
+                                    <li>멤버 목록 ({deleteConfirm.season?.member_count || 0}명)</li>
+                                    <li>모의전 기록</li>
+                                    <li>실전 기록</li>
+                                    <li>멤버 스케줄 정보</li>
+                                </ul>
+                            </div>
+                            
+                            <p style={{
+                                color: '#dc3545',
+                                fontWeight: 'bold',
+                                fontSize: '14px'
+                            }}>
+                                ❗ 이 작업은 되돌릴 수 없습니다.
+                            </p>
+                        </div>
+                        
+                        <div style={{
+                            display: 'flex',
+                            gap: '10px',
+                            justifyContent: 'flex-end'
+                        }}>
+                            <button 
+                                className="btn btn-secondary"
+                                onClick={cancelDelete}
+                                style={{minWidth: '100px'}}
+                            >
+                                취소
+                            </button>
+                            <button 
+                                className="btn btn-danger"
+                                onClick={confirmDelete}
+                                style={{minWidth: '100px'}}
+                            >
+                                삭제
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             </div>
         );
     };
