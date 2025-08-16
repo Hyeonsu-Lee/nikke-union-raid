@@ -2158,10 +2158,17 @@ export default function Home() {
                                         <td style={{textAlign: 'center'}}>{season.member_count}명</td>
                                         <td style={{textAlign: 'left'}}>
                                             <button
-                                                className={isCurrentSeason ? "btn btn-secondary" : "btn btn-primary"}
+                                                className="btn"
+                                                style={{
+                                                    marginRight: '5px',
+                                                    background: isCurrentSeason ? '#51cf66' : '#667eea',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    // 보기 버튼과 동일한 크기 유지
+                                                    padding: '10px 20px'  // btn 클래스 기본값
+                                                }}
                                                 onClick={() => !isCurrentSeason && selectSeason(season.id)}
                                                 disabled={isCurrentSeason}
-                                                style={{marginRight: '5px'}}
                                             >
                                                 {isCurrentSeason ? '현재' : '보기'}
                                             </button>
