@@ -2815,7 +2815,11 @@ export default function Home() {
                                 <button 
                                     type="submit" 
                                     className="btn btn-primary"
-                                    style={{height: 'fit-content'}}  // 입력란과 높이 맞춤
+                                    style={{
+                                        padding: '10px 20px',
+                                        height: '44px',  // form-control의 정확한 높이
+                                        lineHeight: '1.5'
+                                    }}
                                 >
                                     멤버 추가
                                 </button>
