@@ -2145,7 +2145,6 @@ export default function Home() {
                                 <th style={{textAlign: 'left'}}>시즌명</th>
                                 <th style={{textAlign: 'center'}}>레이드 날짜</th>
                                 <th style={{textAlign: 'center'}}>멤버 수</th>
-                                <th style={{textAlign: 'center'}}>상태</th>
                                 <th style={{textAlign: 'left'}}>액션</th>
                             </tr>
                         </thead>
@@ -2157,19 +2156,15 @@ export default function Home() {
                                         <td style={{textAlign: 'left'}}>{season.name}</td>
                                         <td style={{textAlign: 'center'}}>{season.date}</td>
                                         <td style={{textAlign: 'center'}}>{season.member_count}명</td>
-                                        <td style={{textAlign: 'center'}}>
-                                            {isCurrentSeason ? '🔵' : '⚪'}
-                                        </td>
                                         <td style={{textAlign: 'left'}}>
-                                            {!isCurrentSeason && (
-                                                <button
-                                                    className="btn btn-primary"
-                                                    onClick={() => selectSeason(season.id)}
-                                                    style={{marginRight: '5px'}}
-                                                >
-                                                    보기
-                                                </button>
-                                            )}
+                                            <button
+                                                className={isCurrentSeason ? "btn btn-secondary" : "btn btn-primary"}
+                                                onClick={() => !isCurrentSeason && selectSeason(season.id)}
+                                                disabled={isCurrentSeason}
+                                                style={{marginRight: '5px'}}
+                                            >
+                                                {isCurrentSeason ? '현재' : '보기'}
+                                            </button>
                                             <button
                                                 className="btn btn-danger"
                                                 onClick={() => deleteData('seasons', season.id)}
