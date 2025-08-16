@@ -2156,7 +2156,7 @@ export default function Home() {
                                         <td style={{textAlign: 'left'}}>{season.name}</td>
                                         <td style={{textAlign: 'center'}}>{season.date}</td>
                                         <td style={{textAlign: 'center'}}>{season.member_count}명</td>
-                                        <td style={{textAlign: 'left'}}>
+                                        <td style={{textAlign: 'center'}}>
                                             <button
                                                 className="btn"
                                                 style={{
