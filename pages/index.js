@@ -2782,21 +2782,24 @@ export default function Home() {
                 ) : (
                     <>
                         <form onSubmit={handleSubmit}>
-                            <div className="form-group">
-                                <label>멤버 추가</label>
-                                <div style={{
-                                    display: 'flex',
-                                    gap: '10px'
-                                }}>
+                            <div style={{
+                                display: 'flex',
+                                gap: '10px',
+                                alignItems: 'flex-end'  // 하단 정렬 유지
+                            }}>
+                                <div className="form-group" style={{flex: 2}}>
+                                    <label>멤버 이름</label>
                                     <input
                                         ref={memberNameRef}
                                         type="text"
                                         className="form-control"
                                         placeholder="멤버 닉네임 입력"
                                         required
-                                        style={{flex: 2}}
                                     />
-                                    
+                                </div>
+                                
+                                <div className="form-group" style={{flex: 1}}>
+                                    <label>레벨</label>
                                     <input
                                         ref={memberLevelRef}
                                         type="number"
@@ -2806,14 +2809,16 @@ export default function Home() {
                                         min="1"
                                         max="999"
                                         required
-                                        style={{flex: 1}}
                                     />
-                                    
+                                </div>
+                                
+                                <div className="form-group">  {/* 버튼도 form-group으로 감싸기 */}
+                                    <label style={{visibility: 'hidden'}}>&nbsp;</label>  {/* 투명한 라벨 */}
                                     <button 
                                         type="submit" 
                                         className="btn btn-primary"
                                     >
-                                        추가
+                                        멤버 추가
                                     </button>
                                 </div>
                             </div>
