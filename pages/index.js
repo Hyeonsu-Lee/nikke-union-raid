@@ -92,6 +92,8 @@ export default function Home() {
                 // 클라이언트 필터링
                 const member = payload.new || payload.old;
 
+                console.log('🟢 Member event:', payload);
+                
                 handleMemberCountUpdate(payload);
 
                 if (member && currentSeason && member.season_id === currentSeason.id) {
