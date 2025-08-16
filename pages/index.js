@@ -874,17 +874,17 @@ export default function Home() {
             const damage = damageRef.current.value.replace(/,/g, '');
 
             if (!seasonMembers.some(m => m.name === memberName)) {
-                showMessage('등록되지 않은 멤버입니다.', 'error');
+                //showMessage('등록되지 않은 멤버입니다.', 'error');
                 return;
             }
 
             if (!damage || isNaN(damage) || parseInt(damage) <= 0) {
-                showMessage('대미지는 양의 숫자여야 합니다.', 'error');
+                //showMessage('대미지는 양의 숫자여야 합니다.', 'error');
                 return;
             }
 
             if (!memberName || !bossId || !deck || !damage) {
-                showMessage('모든 필드를 입력해주세요.', 'error');
+                //showMessage('모든 필드를 입력해주세요.', 'error');
                 return;
             }
             
@@ -1318,7 +1318,7 @@ export default function Home() {
                                 ))}
                             </select>
                         </div>
-                        
+
                         <div className="form-group" style={{position: 'relative'}}>
                             <label>멤버 이름</label>
                             <input
