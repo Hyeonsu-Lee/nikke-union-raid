@@ -2105,8 +2105,12 @@ export default function Home() {
         return (
             <div>
                 <form onSubmit={handleSubmit}>
-                    <div className="grid-2">
-                        <div className="form-group">
+                    <div style={{
+                        display: 'flex',
+                        gap: '10px',
+                        alignItems: 'flex-end'
+                    }}>
+                        <div className="form-group" style={{flex: 2}}>
                             <label>시즌 이름</label>
                             <input
                                 ref={nameRef}
@@ -2117,7 +2121,7 @@ export default function Home() {
                             />
                         </div>
                         
-                        <div className="form-group">
+                        <div className="form-group" style={{width: '150px'}}>  {/* 날짜는 고정 너비 */}
                             <label>레이드 날짜</label>
                             <input
                                 ref={dateRef}
@@ -2126,31 +2130,31 @@ export default function Home() {
                                 required
                             />
                         </div>
+                        
+                        <div className="form-group" style={{flex: 1.5}}>
+                            <label>이전 시즌 멤버 복사 (선택)</label>
+                            <select
+                                ref={copyRef}
+                                className="form-control"
+                            >
+                                <option value="">멤버 복사 안함</option>
+                                {seasons.map(season => {
+                                    return (
+                                        <option key={season.id} value={season.id}>
+                                            {season.name} ({season.member_count}명)
+                                        </option>
+                                    );
+                                })}
+                            </select>
+                        </div>
+                        
+                        <div className="form-group">  {/* 버튼도 form-group으로 감싸기 */}
+                            <label style={{visibility: 'hidden'}}>&nbsp;</label>  {/* 투명 라벨 */}
+                            <button type="submit" className="btn btn-primary">
+                                시즌 추가
+                            </button>
+                        </div>
                     </div>
-                    
-                    <div className="form-group">
-                        <label>이전 시즌 멤버 복사 (선택)</label>
-                        <select
-                            ref={copyRef}
-                            className="form-control"
-                        >
-                            <option value="">멤버 복사 안함</option>
-                            {seasons.map(season => {
-                                return (
-                                    <option key={season.id} value={season.id}>
-                                        {season.name} ({season.member_count}명)
-                                    </option>
-                                );
-                            })}
-                        </select>
-                        <small style={{color: '#666', display: 'block', marginTop: '5px'}}>
-                            선택한 시즌의 멤버 목록을 새 시즌으로 복사합니다.
-                        </small>
-                    </div>
-                    
-                    <button type="submit" className="btn btn-primary">
-                        시즌 추가
-                    </button>
                 </form>
                 
                 <h3 style={{marginTop: '30px', marginBottom: '15px'}}>시즌 목록</h3>
