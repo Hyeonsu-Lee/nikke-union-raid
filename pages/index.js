@@ -78,8 +78,7 @@ export default function Home() {
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
-                table: 'seasons',
-                filter: `union_id=eq.${unionInfo.unionId}`
+                table: 'seasons'
             }, (payload) => {
                 console.log('Season event received:', payload); 
                 handleRealtimeUpdate('seasons', payload);
