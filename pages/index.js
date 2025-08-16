@@ -162,7 +162,7 @@ export default function Home() {
                 if (eventType === 'INSERT') {
                     setSeasons(prev => [{
                         ...newRecord,
-                        member_count: '...'
+                        member_count: 0
                     }, ...prev]);
                 } else if (eventType === 'UPDATE') {
                     setSeasons(prev => prev.map(s => s.id === newRecord.id ? newRecord : s));
