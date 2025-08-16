@@ -2782,33 +2782,44 @@ export default function Home() {
                 ) : (
                     <>
                         <form onSubmit={handleSubmit}>
-                            <div className="form-group">
-                                <label>멤버 이름</label>
-                                <input
-                                    ref={memberNameRef}
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="멤버 닉네임 입력"
-                                    required
-                                />
+                            <div style={{
+                                display: 'flex',
+                                gap: '10px',
+                                alignItems: 'flex-end'  // 버튼과 입력란 하단 정렬
+                            }}>
+                                <div className="form-group" style={{flex: 2}}>  {/* 이름이 더 넓게 */}
+                                    <label>멤버 이름</label>
+                                    <input
+                                        ref={memberNameRef}
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="멤버 닉네임 입력"
+                                        required
+                                    />
+                                </div>
+                                
+                                <div className="form-group" style={{flex: 1}}>  {/* 레벨은 좁게 */}
+                                    <label>레벨</label>
+                                    <input
+                                        ref={memberLevelRef}
+                                        type="number"
+                                        className="form-control"
+                                        placeholder="레벨"
+                                        defaultValue="1"
+                                        min="1"
+                                        max="999"
+                                        required
+                                    />
+                                </div>
+                                
+                                <button 
+                                    type="submit" 
+                                    className="btn btn-primary"
+                                    style={{height: 'fit-content'}}  // 입력란과 높이 맞춤
+                                >
+                                    멤버 추가
+                                </button>
                             </div>
-                            <div className="form-group">
-                                <label>레벨</label>
-                                <input
-                                    ref={memberLevelRef}
-                                    type="number"
-                                    className="form-control"
-                                    placeholder="레벨 입력"
-                                    defaultValue="1"
-                                    min="1"
-                                    max="9999"
-                                    required
-                                />
-                            </div>
-                            
-                            <button type="submit" className="btn btn-primary">
-                                멤버 추가
-                            </button>
                         </form>
                         
                         <h3 style={{marginTop: '30px', marginBottom: '15px'}}>
