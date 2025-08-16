@@ -49,7 +49,8 @@ export default async function handler(req, res) {
                         if (sourceMembers && sourceMembers.length > 0) {
                             const newMembers = sourceMembers.map(member => ({
                                 season_id: newSeason.id,
-                                name: member.name
+                                name: member.name,
+                                union_id: unionId
                             }));
                             
                             await supabase.from('members').insert(newMembers);
