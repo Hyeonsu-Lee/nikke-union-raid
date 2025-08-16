@@ -2108,7 +2108,8 @@ export default function Home() {
                     <div style={{
                         display: 'flex',
                         gap: '10px',
-                        alignItems: 'flex-end'
+                        alignItems: 'flex-end',
+                        flexWrap: 'wrap'
                     }}>
                         <div className="form-group" style={{flex: 2}}>
                             <label>시즌 이름</label>
@@ -2789,7 +2790,8 @@ export default function Home() {
                             <div style={{
                                 display: 'flex',
                                 gap: '10px',
-                                alignItems: 'flex-end'  // 하단 정렬 유지
+                                alignItems: 'flex-end',
+                                flexWrap: 'wrap'
                             }}>
                                 <div className="form-group" style={{flex: 2}}>
                                     <label>멤버 이름</label>
