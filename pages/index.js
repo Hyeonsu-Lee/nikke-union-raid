@@ -91,6 +91,9 @@ export default function Home() {
             }, (payload) => {
                 // 클라이언트 필터링
                 const member = payload.new || payload.old;
+
+                handleMemberCountUpdate(payload);
+
                 if (member && currentSeason && member.season_id === currentSeason.id) {
                     handleRealtimeUpdate('members', payload);
                 }
@@ -238,6 +241,27 @@ export default function Home() {
                     setRaidBattles(prev => prev.filter(b => b.id !== oldRecord.id));
                 }
                 break;
+        }
+    };
+    // 1. 카운트만 처리하는 함수
+    const handleMemberCountUpdate = (payload) => {
+        const { eventType, new: newRecord, old: oldRecord } = payload;
+        const member = newRecord || oldRecord;
+        
+        if (eventType === 'INSERT') {
+            setSeasons(prev => prev.map(season => {
+                if (season.id === member.season_id) {
+                    return { ...season, member_count: season.member_count + 1 };
+                }
+                return season;
+            }));
+        } else if (eventType === 'DELETE' || (eventType === 'UPDATE' && newRecord?.deleted_at)) {
+            setSeasons(prev => prev.map(season => {
+                if (season.id === member.season_id) {
+                    return { ...season, member_count: Math.max(0, season.member_count - 1) };
+                }
+                return season;
+            }));
         }
     };
 
