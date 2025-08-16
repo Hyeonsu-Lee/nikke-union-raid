@@ -2111,7 +2111,10 @@ export default function Home() {
                         alignItems: 'flex-end',
                         flexWrap: 'wrap'
                     }}>
-                        <div className="form-group" style={{flex: 2}}>
+                        <div className="form-group" style={{
+                            flex: '1 1 250px',  // 기본 250px, 늘어나고 줄어들 수 있음
+                            minWidth: '200px'    // 최소 200px
+                        }}>
                             <label>시즌 이름</label>
                             <input
                                 ref={nameRef}
@@ -2122,7 +2125,10 @@ export default function Home() {
                             />
                         </div>
                         
-                        <div className="form-group" style={{width: '150px'}}>  {/* 날짜는 고정 너비 */}
+                        <div className="form-group" style={{
+                            flex: '0 0 160px',  // 고정 160px (날짜는 일정한 크기)
+                            minWidth: '160px'
+                        }}>
                             <label>레이드 날짜</label>
                             <input
                                 ref={dateRef}
@@ -2132,7 +2138,10 @@ export default function Home() {
                             />
                         </div>
                         
-                        <div className="form-group" style={{flex: 1.5}}>
+                        <div className="form-group" style={{
+                            flex: '1 1 220px',  // 기본 220px
+                            minWidth: '180px'    // 최소 180px
+                        }}>
                             <label>이전 시즌 멤버 복사 (선택)</label>
                             <select
                                 ref={copyRef}
@@ -2793,7 +2802,10 @@ export default function Home() {
                                 alignItems: 'flex-end',
                                 flexWrap: 'wrap'
                             }}>
-                                <div className="form-group" style={{flex: 2}}>
+                                <div className="form-group" style={{
+                                    flex: '1 1 200px',  // 기본 200px
+                                    minWidth: '150px'    // 최소 150px
+                                }}>
                                     <label>멤버 이름</label>
                                     <input
                                         ref={memberNameRef}
@@ -2804,7 +2816,10 @@ export default function Home() {
                                     />
                                 </div>
                                 
-                                <div className="form-group" style={{flex: 1}}>
+                                <div className="form-group" style={{
+                                    flex: '0 0 100px',  // 고정 100px (숫자만)
+                                    minWidth: '80px'     // 최소 80px
+                                }}>
                                     <label>레벨</label>
                                     <input
                                         ref={memberLevelRef}
