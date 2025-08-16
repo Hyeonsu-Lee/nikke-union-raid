@@ -2163,9 +2163,7 @@ export default function Home() {
                                                     marginRight: '5px',
                                                     background: isCurrentSeason ? '#51cf66' : '#667eea',
                                                     color: 'white',
-                                                    border: 'none',
-                                                    // 보기 버튼과 동일한 크기 유지
-                                                    padding: '10px 20px'  // btn 클래스 기본값
+                                                    border: 'none'
                                                 }}
                                                 onClick={() => !isCurrentSeason && selectSeason(season.id)}
                                                 disabled={isCurrentSeason}
