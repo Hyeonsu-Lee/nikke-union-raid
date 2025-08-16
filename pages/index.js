@@ -2158,16 +2158,18 @@ export default function Home() {
                                         <td style={{textAlign: 'center'}}>{season.member_count}명</td>
                                         <td style={{textAlign: 'left'}}>
                                             {isCurrentSeason ? (
-                                                <span style={{
-                                                    padding: '10px 20px',
-                                                    background: '#51cf66',  // 녹색 배경
-                                                    color: 'white',
-                                                    borderRadius: '8px',
-                                                    marginRight: '5px',
-                                                    display: 'inline-block'
-                                                }}>
+                                                <button
+                                                    className="btn"  // 버튼과 동일한 클래스
+                                                    style={{
+                                                        background: '#51cf66',
+                                                        color: 'white',
+                                                        marginRight: '5px',
+                                                        cursor: 'default'  // 클릭 커서 제거
+                                                    }}
+                                                    disabled
+                                                >
                                                     선택됨
-                                                </span>
+                                                </button>
                                             ) : (
                                                 <button
                                                     className="btn btn-primary"
