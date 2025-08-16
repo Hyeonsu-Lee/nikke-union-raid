@@ -1246,7 +1246,7 @@ export default function Home() {
                                 }}
                                 onBlur={() => {
                                     // 클릭 이벤트가 먼저 실행되도록 딜레이
-                                    setTimeout(() => setShowSuggestions(false), 200);
+                                    setTimeout(() => setShowSuggestions(false), 100);
                                 }}
                                 placeholder="닉네임 입력 또는 선택"
                             />
