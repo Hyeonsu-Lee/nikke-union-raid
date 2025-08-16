@@ -2782,24 +2782,21 @@ export default function Home() {
                 ) : (
                     <>
                         <form onSubmit={handleSubmit}>
-                            <div style={{
-                                display: 'flex',
-                                gap: '10px',
-                                alignItems: 'flex-end'  // 버튼과 입력란 하단 정렬
-                            }}>
-                                <div className="form-group" style={{flex: 2}}>  {/* 이름이 더 넓게 */}
-                                    <label>멤버 이름</label>
+                            <div className="form-group">
+                                <label>멤버 추가</label>
+                                <div style={{
+                                    display: 'flex',
+                                    gap: '10px'
+                                }}>
                                     <input
                                         ref={memberNameRef}
                                         type="text"
                                         className="form-control"
                                         placeholder="멤버 닉네임 입력"
                                         required
+                                        style={{flex: 2}}
                                     />
-                                </div>
-                                
-                                <div className="form-group" style={{flex: 1}}>  {/* 레벨은 좁게 */}
-                                    <label>레벨</label>
+                                    
                                     <input
                                         ref={memberLevelRef}
                                         type="number"
@@ -2809,20 +2806,16 @@ export default function Home() {
                                         min="1"
                                         max="999"
                                         required
+                                        style={{flex: 1}}
                                     />
+                                    
+                                    <button 
+                                        type="submit" 
+                                        className="btn btn-primary"
+                                    >
+                                        추가
+                                    </button>
                                 </div>
-                                
-                                <button 
-                                    type="submit" 
-                                    className="btn btn-primary"
-                                    style={{
-                                        padding: '10px 20px',
-                                        height: '44px',  // form-control의 정확한 높이
-                                        lineHeight: '1.5'
-                                    }}
-                                >
-                                    멤버 추가
-                                </button>
                             </div>
                         </form>
                         
