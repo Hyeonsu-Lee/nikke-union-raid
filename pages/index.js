@@ -2142,11 +2142,11 @@ export default function Home() {
                     <table>
                         <thead>
                             <tr>
-                                <th>시즌명</th>
-                                <th>레이드 날짜</th>
-                                <th>멤버 수</th>
-                                <th>상태</th>
-                                <th>액션</th>
+                                <th style={{textAlign: 'left'}}>시즌명</th>
+                                <th style={{textAlign: 'center'}}>레이드 날짜</th>
+                                <th style={{textAlign: 'center'}}>멤버 수</th>
+                                <th style={{textAlign: 'center'}}>상태</th>
+                                <th style={{textAlign: 'left'}}>액션</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2154,13 +2154,13 @@ export default function Home() {
                                 const isCurrentSeason = currentSeason?.id === season.id;
                                 return (
                                     <tr key={season.id}>
-                                        <td>{season.name}</td>
-                                        <td>{season.date}</td>
-                                        <td>{season.member_count}명</td>
+                                        <td style={{textAlign: 'left'}}>{season.name}</td>
+                                        <td style={{textAlign: 'center'}}>{season.date}</td>
+                                        <td style={{textAlign: 'center'}}>{season.member_count}명</td>
                                         <td style={{textAlign: 'center'}}>
                                             {isCurrentSeason ? '🔵' : '⚪'}
                                         </td>
-                                        <td>
+                                        <td style={{textAlign: 'left'}}>
                                             {!isCurrentSeason && (
                                                 <button
                                                     className="btn btn-primary"
