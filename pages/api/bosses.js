@@ -6,12 +6,13 @@ export default async function handler(req, res) {
     
     switch (method) {
         case 'POST':
-            const { seasonId, bosses: bossData } = req.body;
+            const { seasonId, unionId, bosses: bossData } = req.body;
             
             try {
                 const bossesWithSeasonId = bossData.map(boss => ({
                     ...boss,
                     season_id: seasonId,
+                    union_id: unionId,
                     order: boss.order
                 }));
                 

@@ -6,13 +6,14 @@ export default async function handler(req, res) {
     
     switch (method) {
         case 'POST':
-            const { seasonId, memberName, bossId, deckComposition, damage } = req.body;
+            const { seasonId, unionId, memberName, bossId, deckComposition, damage } = req.body;
             
             try {
                 const { error } = await supabase
                     .from('mock_battles')
                     .insert([{
                         season_id: seasonId,
+                        union_id: unionId,
                         member_name: memberName,
                         boss_id: bossId,
                         deck_composition: deckComposition,

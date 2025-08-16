@@ -157,7 +157,10 @@ export default function Home() {
         switch (table) {
             case 'seasons':
                 if (eventType === 'INSERT') {
-                    setSeasons(prev => [newRecord, ...prev]);
+                    setSeasons(prev => [{
+                        ...newRecord,
+                        member_count: 0
+                    }, ...prev]);
                 } else if (eventType === 'UPDATE') {
                     setSeasons(prev => prev.map(s => s.id === newRecord.id ? newRecord : s));
                 } else if (eventType === 'DELETE') {
@@ -852,6 +855,7 @@ export default function Home() {
 
             await saveData('mock-battles', {
                 seasonId: currentSeason.id,
+                unionId: unionInfo.unionId,
                 memberName: memberName,
                 bossId: bossId,
                 deckComposition: deck,
@@ -1216,6 +1220,7 @@ export default function Home() {
 
             await saveData('raid-battles', {
                 seasonId: currentSeason.id,
+                unionId: unionInfo.unionId,
                 memberName: memberName,
                 level: parseInt(level),
                 bossId: selectedBoss.id,
@@ -2091,10 +2096,9 @@ export default function Home() {
                         >
                             <option value="">멤버 복사 안함</option>
                             {seasons.map(season => {
-                                const seasonMemberCount = season.member_count || 0;
                                 return (
                                     <option key={season.id} value={season.id}>
-                                        {season.name} ({seasonMemberCount}명)
+                                        {season.name} ({season.member_count}명)
                                     </option>
                                 );
                             })}
@@ -2123,13 +2127,12 @@ export default function Home() {
                         </thead>
                         <tbody>
                             {seasons.map(season => {
-                                const seasonMemberCount = season.member_count || 0;
                                 const isCurrentSeason = currentSeason?.id === season.id;
                                 return (
                                     <tr key={season.id}>
                                         <td>{season.name}</td>
                                         <td>{season.date}</td>
-                                        <td>{seasonMemberCount}명</td>
+                                        <td>{season.member_count}명</td>
                                         <td style={{textAlign: 'center'}}>
                                             {isCurrentSeason ? '🔵' : '⚪'}
                                         </td>
@@ -2344,6 +2347,7 @@ export default function Home() {
 
             await saveData('bosses', {
                 seasonId: currentSeason.id,
+                unionId: unionInfo.unionId,
                 bosses: newBosses
             });
         };
@@ -2550,6 +2554,7 @@ export default function Home() {
 
             await saveData('members', {
                 seasonId: currentSeason.id,
+                unionId: unionInfo.unionId,
                 name: memberName
             });
         };
@@ -2623,6 +2628,7 @@ export default function Home() {
             
             await saveData('member-schedules', {
                 memberId: editingSchedule.id,
+                unionId: unionInfo.unionId,
                 seasonId: currentSeason.id,
                 timeSlots: timeSlotString
             }, 'PUT');

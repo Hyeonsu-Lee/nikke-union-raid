@@ -25,8 +25,8 @@ export default async function handler(req, res) {
             
         case 'POST':
         case 'PUT':
-            const { memberId, seasonId: season_id, timeSlots } = req.body;
-            
+            const { memberId, seasonId: season_id, unionId, timeSlots } = req.body;
+
             try {
                 // upsert: 있으면 UPDATE, 없으면 INSERT
                 const { error } = await supabase
@@ -34,6 +34,7 @@ export default async function handler(req, res) {
                     .upsert({
                         member_id: memberId,
                         season_id: season_id,
+                        union_id: unionId,
                         time_slots: timeSlots,
                         updated_at: new Date().toISOString()
                     }, {

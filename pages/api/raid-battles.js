@@ -6,14 +6,15 @@ export default async function handler(req, res) {
     
     switch (method) {
         case 'POST':
-            const { seasonId, memberName, level, bossId, deckComposition, damage } = req.body;
-            
+            const { seasonId, unionId, memberName, level, bossId, deckComposition, damage } = req.body;
+
             try {
                 const koreaTime = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
                 const { error } = await supabase
                     .from('raid_battles')
                     .insert([{
                         season_id: seasonId,
+                        union_id: unionId,
                         member_name: memberName,
                         level,
                         boss_id: bossId,
