@@ -81,12 +81,14 @@ export default function Home() {
                 table: 'seasons',
                 filter: `union_id=eq.${unionInfo.unionId}`
             }, (payload) => {
+                console.log('Season event received:', payload); 
                 handleRealtimeUpdate('seasons', payload);
             })
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
-                table: 'members'
+                table: 'members',
+                filter: `union_id=eq.${unionInfo.unionId}`
             }, (payload) => {
                 // 클라이언트 필터링
                 const member = payload.new || payload.old;
@@ -97,7 +99,8 @@ export default function Home() {
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
-                table: 'member_schedules'
+                table: 'member_schedules',
+                filter: `union_id=eq.${unionInfo.unionId}`
             }, (payload) => {
                 const schedule = payload.new || payload.old;
                 if (schedule && currentSeason && schedule.season_id === currentSeason.id) {
@@ -107,7 +110,8 @@ export default function Home() {
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
-                table: 'bosses'
+                table: 'bosses',
+                filter: `union_id=eq.${unionInfo.unionId}`
             }, (payload) => {
                 const boss = payload.new || payload.old;
                 if (boss && currentSeason && boss.season_id === currentSeason.id) {
@@ -117,7 +121,8 @@ export default function Home() {
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
-                table: 'mock_battles'
+                table: 'mock_battles',
+                filter: `union_id=eq.${unionInfo.unionId}`
             }, (payload) => {
                 const battle = payload.new || payload.old;
                 if (battle && currentSeason && battle.season_id === currentSeason.id) {
@@ -127,7 +132,8 @@ export default function Home() {
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
-                table: 'raid_battles'
+                table: 'raid_battles',
+                filter: `union_id=eq.${unionInfo.unionId}`
             }, (payload) => {
                 const battle = payload.new || payload.old;
                 if (battle && currentSeason && battle.season_id === currentSeason.id) {
